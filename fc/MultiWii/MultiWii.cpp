@@ -24,7 +24,7 @@ March  2015     V2.4
 #include "Sensors.h"
 #include "Serial.h"
 #include "GPS.h"
-#if defined(OPT)
+#if (defined (SUPERBEE) && defined(OPT))
 #include "OPT.h"    // for OptiTrack, added by Roice, 20150614
 #endif
 #include "Protocol.h"
@@ -1260,7 +1260,7 @@ void loop () {
           #endif
 
 /* Added by Roice, 20150614 */
-          #if defined(OPT)  // OptiTrack Motion Capture for 3D navigation
+          #if (defined(SUPERBEE) && defined(OPT))  // OptiTrack Motion Capture for 3D navigation
           if (OPT_NewData() != 0) break;
           #endif
 
@@ -1536,6 +1536,37 @@ void loop () {
   #endif 
   writeMotors();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

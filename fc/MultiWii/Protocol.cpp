@@ -10,6 +10,17 @@
 #include "Serial.h"
 #include "Protocol.h"
 #include "RX.h"
+/* Added by Roice, 20150615 */
+//#if (defined(SUPERBEE) && defined(OPT))
+#include "OPT.h"
+//#endif
+
+/* Added by Roice, 20150615 */
+/********** SuperBee Serial Protocol ***********/
+/* The SBSP message ids occupy MSP id [50-99], which are custom MSP ids */
+#define SBSP_VERSION            50
+#define SBSP_FRESH_POS_OPT      61
+/* End of modification */
 
 /************************************** MultiWii Serial Protocol *******************************************************/
 // Multiwii Serial Protocol 0 
@@ -89,8 +100,14 @@ static uint8_t checksum[UART_NUMBER];
 static uint8_t indRX[UART_NUMBER];
 static uint8_t cmdMSP[UART_NUMBER];
 
+extern struct pos_t pos_enu;
+
 void evaluateOtherData(uint8_t sr);
 void evaluateCommand(uint8_t c);
+
+#if defined(SUPERBEE)
+void evaluateSBSPcommand(uint8_t c);    // added by Roice, 20150615
+#endif
 
 static uint8_t read8()  {
   return inBuf[indRX[CURRENTPORT]++][CURRENTPORT]&0xff;
@@ -167,13 +184,22 @@ static void mspAck() {
   headSerialReply(0);tailSerialReply();
 }
 
-enum MSP_protocol_bytes {
+/* Modified by Roice, 20150615 */
+//enum MSP_protocol_bytes {
+enum SP_protocol_states {
+/* for MSP protocol */
   IDLE,
   HEADER_START,
   HEADER_M,
   HEADER_ARROW,
   HEADER_SIZE,
-  HEADER_CMD
+  HEADER_CMD,
+/* for SBSP protocol */
+  SBSP_START,   // '$'
+  SBSP_B,       // 'B'
+  SBSP_ARROW,
+  SBSP_SIZE,
+  SBSP_CMD
 };
 
 void serialCom() {
@@ -204,7 +230,24 @@ void serialCom() {
           if (c=='$') state = HEADER_START;
           else evaluateOtherData(c); // evaluate all other incoming serial data
         } else if (state == HEADER_START) {
+
+/* Modified by Roice, 20150615 */
+          /* Add decode function for SuperBee serial protocol */
+        #if !defined(SUPERBEE)
           state = (c=='M') ? HEADER_M : IDLE;
+        #else
+          if (c=='M')
+              state = HEADER_M;
+          else if (c=='B')
+          {
+              /* SuperBee SP start with '$B' */
+              state = SBSP_B;
+          }
+          else
+              state = IDLE;
+        #endif
+/* End of modification */
+
         } else if (state == HEADER_M) {
           state = (c=='<') ? HEADER_ARROW : IDLE;
         } else if (state == HEADER_ARROW) {
@@ -232,6 +275,46 @@ void serialCom() {
             cc = 0; // no more than one MSP per port and per cycle
           }
         }
+/* Added by Roice, 20150615 */
+    #if defined(SUPERBEE)
+        /* Add SBSP protocol decode */
+        else if (state == SBSP_B)
+        {
+            state = (c=='<') ? SBSP_ARROW : IDLE;
+        }
+        else if (state == SBSP_ARROW) 
+        {
+          if (c > INBUF_SIZE) {  // now we are expecting the payload size
+            state = IDLE;
+            continue;
+          }
+          dataSize[port] = c;
+          checksum[port] = c;
+          offset[port] = 0;
+          indRX[port] = 0;
+          state = SBSP_SIZE;  // the command is to follow
+        }
+        else if (state == SBSP_SIZE)
+        {
+          cmdMSP[port] = c;
+          checksum[port] ^= c;
+          state = SBSP_CMD;
+        }
+        else if (state == SBSP_CMD)
+        {
+          if (offset[port] < dataSize[port]) {
+            checksum[port] ^= c;
+            inBuf[offset[port]++][port] = c;
+          } else {
+            if (checksum[port] == c) // compare calculated and transferred checksum
+              evaluateSBSPcommand(cmdMSP[port]); // we got a valid packet, evaluate it
+            state = IDLE;
+            cc = 0; // no more than one MSP per port and per cycle
+          }
+        }
+    #endif
+/* End of modification */
+
         c_state[port] = state;
 
         // SERIAL: try to detect a new nav frame based on the current received buffer
@@ -258,6 +341,37 @@ void serialCom() {
     } // while
   } // for
 }
+
+/* Added by Roice, 20150615 */
+#if defined(SUPERBEE)
+/* SBSP decoder */
+void evaluateSBSPcommand(uint8_t c)
+{
+    switch(c)
+    {
+        // position data from OptiTrack Motion Capture
+        case SBSP_FRESH_POS_OPT:
+            mspAck();
+            s_struct_w((uint8_t*)&pos_enu.north, 3*4);
+            break;
+        case SBSP_VERSION:
+            struct
+            {
+                uint8_t v,t,msp_v;
+                uint32_t cap;
+            } id;
+            id.v     = VERSION;
+            id.t     = MULTITYPE;
+            id.msp_v = SBSP_VERSION;
+            id.cap   = (0+BIND_CAPABLE)|DYNBAL<<2|FLAP<<3|NAVCAP<<4|EXTAUX<<5|((uint32_t)NAVI_VERSION<<28); //Navi version is stored in the upper four bits; 
+            s_struct((uint8_t*)&id,7);
+            break;
+        default:
+            break;
+    }
+}
+#endif
+/* End of modification */
 
 void evaluateCommand(uint8_t c) {
   uint32_t tmp=0; 
@@ -843,6 +957,25 @@ static void debugmsg_serialize(uint8_t l) {
 #else
 void debugmsg_append_str(const char *str) {};
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
