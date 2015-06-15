@@ -11,14 +11,16 @@
 #include "Protocol.h"
 #include "RX.h"
 /* Added by Roice, 20150615 */
-//#if (defined(SUPERBEE) && defined(OPT))
+#if (defined(SUPERBEE) && defined(OPT))
 #include "OPT.h"
-//#endif
+#endif
 
 /* Added by Roice, 20150615 */
 /********** SuperBee Serial Protocol ***********/
+#define SBSP_VERSION            0   // sbsp version
+
 /* The SBSP message ids occupy MSP id [50-99], which are custom MSP ids */
-#define SBSP_VERSION            50
+#define SBSP_IDENT              50
 #define SBSP_FRESH_POS_OPT      61
 /* End of modification */
 
@@ -100,7 +102,9 @@ static uint8_t checksum[UART_NUMBER];
 static uint8_t indRX[UART_NUMBER];
 static uint8_t cmdMSP[UART_NUMBER];
 
+#if (defined(SUPERBEE) && defined(OPT))
 extern struct pos_t pos_enu;
+#endif
 
 void evaluateOtherData(uint8_t sr);
 void evaluateCommand(uint8_t c);
@@ -183,6 +187,29 @@ static void s_struct(uint8_t *cb,uint8_t siz) {
 static void mspAck() {
   headSerialReply(0);tailSerialReply();
 }
+
+/* Added by Roice, 20150615 */
+/* serial operating functions for SBSP message */
+static void sbsp_headSerialResponse(uint8_t err, uint8_t s) {
+  serialize8('$');
+  serialize8('B');
+  serialize8(err ? '!' : '>');
+  checksum[CURRENTPORT] = 0; // start calculating a new checksum
+  serialize8(s);
+  serialize8(cmdMSP[CURRENTPORT]);
+}
+static void sbsp_headSerialReply(uint8_t s) {
+  sbsp_headSerialResponse(0, s);
+}
+static void sbsp_struct(uint8_t *cb,uint8_t siz) {
+  sbsp_headSerialReply(siz);
+  s_struct_partial(cb,siz);
+  tailSerialReply();
+}
+static void sbspAck() {
+  sbsp_headSerialReply(0);tailSerialReply();
+}
+/* End of modification */
 
 /* Modified by Roice, 20150615 */
 //enum MSP_protocol_bytes {
@@ -351,10 +378,17 @@ void evaluateSBSPcommand(uint8_t c)
     {
         // position data from OptiTrack Motion Capture
         case SBSP_FRESH_POS_OPT:
-            mspAck();
-            s_struct_w((uint8_t*)&pos_enu.north, 3*4);
+            sbspAck();
+            s_struct_w((uint8_t*)&pos_enu, 3*4);
+            // for debug
+            /*
+            pos_enu.east = 0x12345678;
+            pos_enu.north = 0x12345678;
+            pos_enu.up = 0x12345678;
+            sbsp_struct((uint8_t*)&pos_enu,3*4);
+            */
             break;
-        case SBSP_VERSION:
+        case SBSP_IDENT:
             struct
             {
                 uint8_t v,t,msp_v;
@@ -364,7 +398,7 @@ void evaluateSBSPcommand(uint8_t c)
             id.t     = MULTITYPE;
             id.msp_v = SBSP_VERSION;
             id.cap   = (0+BIND_CAPABLE)|DYNBAL<<2|FLAP<<3|NAVCAP<<4|EXTAUX<<5|((uint32_t)NAVI_VERSION<<28); //Navi version is stored in the upper four bits; 
-            s_struct((uint8_t*)&id,7);
+            sbsp_struct((uint8_t*)&id,7);
             break;
         default:
             break;

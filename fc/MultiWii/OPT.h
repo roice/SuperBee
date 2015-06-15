@@ -8,11 +8,11 @@
 /* processed in OPT_NewData function */
 struct pos_t
 {
-    // local NEU, accuracy: 0.1 milimeters
+    // local ENU, accuracy: 0.1 milimeters
     // example: if up coordinate is -330.6 mm
     //          up == -3306
-    int32_t north;
     int32_t east;
+    int32_t north;
     int32_t up;
 };
 

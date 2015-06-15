@@ -498,10 +498,10 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
 
   /******                Serial com speed    *********************************/
     /* This is the speed of the serial interfaces */
-    #define SERIAL0_COM_SPEED 115200
-    #define SERIAL1_COM_SPEED 115200
-    #define SERIAL2_COM_SPEED 115200
-    #define SERIAL3_COM_SPEED 115200
+    #define SERIAL0_COM_SPEED 57600
+    #define SERIAL1_COM_SPEED 57600
+    #define SERIAL2_COM_SPEED 57600
+    #define SERIAL3_COM_SPEED 57600
 
     /* when there is an error on I2C bus, we neutralize the values during a short time. expressed in microseconds
        it is relevent only for a conf with at least a WMP */
