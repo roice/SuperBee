@@ -24,6 +24,9 @@ March  2015     V2.4
 #include "Sensors.h"
 #include "Serial.h"
 #include "GPS.h"
+#if defined(OPT)
+#include "OPT.h"    // for OptiTrack, added by Roice, 20150614
+#endif
 #include "Protocol.h"
 
 #include <avr/pgmspace.h>
@@ -1255,6 +1258,12 @@ void loop () {
           #if defined(I2C_GPS)
           if (GPS_NewData() != 0) break;  // 160 us with no new data / much more with new data 
           #endif
+
+/* Added by Roice, 20150614 */
+          #if defined(OPT)  // OptiTrack Motion Capture for 3D navigation
+          if (OPT_NewData() != 0) break;
+          #endif
+
         #endif
       case 4:
         taskOrder=0;
@@ -1527,3 +1536,6 @@ void loop () {
   #endif 
   writeMotors();
 }
+
+
+

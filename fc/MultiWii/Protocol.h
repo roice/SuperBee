@@ -5,3 +5,6 @@ void serialCom();
 void debugmsg_append_str(const char *str);
 
 #endif /* PROTOCOL_H_ */
+
+
+

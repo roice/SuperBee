@@ -1537,3 +1537,6 @@ void initSensors() {
     if (i2c_errors_count == 0) break; // no error during init => init ok
   }
 }
+
+
+

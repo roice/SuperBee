@@ -36,7 +36,7 @@
     //#define BI
     //#define TRI
     //#define QUADP
-    //#define QUADX
+    #define QUADX
     //#define Y4
     //#define Y6
     //#define HEX6
@@ -159,6 +159,7 @@
       //#define MultiWii_32U4_SE_no_baro // Hextronik MultiWii_32U4_SE without the MS561101BA to free flash-memory for other functions
       //#define Flyduino9DOF       // Flyduino 9DOF IMU MPU6050+HMC5883l
       //#define Nano_Plane         // Multiwii Plane version with tail-front LSM330 sensor http://www.radiosait.ru/en/page_5324.html
+      #define SUPERBEE           // SuperBee is mainly implemented by a Nano MWC board, the sensor config is written in def.h, added by Roice, 20150614
       
     /***************************    independent sensors    ********************************/
       /* leave it commented if you already checked a specific board above */
@@ -360,7 +361,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
     /****************************    PPM Sum Reciver    ***********************************/
       /* The following lines apply only for specific receiver with only one PPM sum signal, on digital PIN 2
          Select the right line depending on your radio brand. Feel free to modify the order in your PPM order is different */
-      //#define SERIAL_SUM_PPM         PITCH,YAW,THROTTLE,ROLL,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Graupner/Spektrum
+      #define SERIAL_SUM_PPM         PITCH,YAW,THROTTLE,ROLL,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Graupner/Spektrum
       //#define SERIAL_SUM_PPM         ROLL,PITCH,THROTTLE,YAW,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Robe/Hitec/Futaba
       //#define SERIAL_SUM_PPM         ROLL,PITCH,YAW,THROTTLE,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For Multiplex
       //#define SERIAL_SUM_PPM         PITCH,ROLL,THROTTLE,YAW,AUX1,AUX2,AUX3,AUX4,8,9,10,11 //For some Hitec/Sanwa/Others
@@ -394,7 +395,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
          You have to invert the S-Bus-Serial Signal e.g. with a Hex-Inverter like IC SN74 LS 04 */
       //#define SBUS     PITCH,YAW,THROTTLE,ROLL,AUX1,AUX2,AUX3,AUX4,8,9,10,11,12,13,14,15,16,17  // dsm2 orangerx
       //#define SBUS     ROLL,PITCH,THROTTLE,YAW,AUX1,AUX2,AUX3,AUX4,8,9,10,11,12,13,14,15,16,17  // T14SG
-      //#define RX_SERIAL_PORT 1
+      #define RX_SERIAL_PORT 1
       #define SBUS_MID_OFFSET 988 //SBUS Mid-Point at 1500
 
     /******************************* HOTT RECIVER ************************************/
@@ -476,7 +477,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
 
   /* only enable any of this if you must change the default pin assignment, e.g. your board does not have a specific pin */
   /* you may need to change PINx and PORTx plus #shift according to the desired pin! */
-  //#define OVERRIDE_V_BATPIN                   A0 // instead of A3    // Analog PIN 3
+  #define OVERRIDE_V_BATPIN                   A2 // instead of A3    // Analog PIN 3
 
   //#define OVERRIDE_PSENSORPIN                 A1 // instead of A2    // Analog PIN 2
 
@@ -520,7 +521,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
       //#define GYRO_LPF_256HZ     // This is the default setting, no need to uncomment, just for reference
       //#define GYRO_LPF_188HZ
       //#define GYRO_LPF_98HZ
-      //#define GYRO_LPF_42HZ
+      #define GYRO_LPF_42HZ
       //#define GYRO_LPF_20HZ
       //#define GYRO_LPF_10HZ
       //#define GYRO_LPF_5HZ       // Use this only in extreme cases, rather change motors and/or props -- setting not available on ITG3200
@@ -575,12 +576,12 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
 
   /************************        continuous gyro calibration        ********************/
   /* Gyrocalibration will be repeated if copter is moving during calibration. */
-    //#define GYROCALIBRATIONFAILSAFE
+    #define GYROCALIBRATIONFAILSAFE
 
   /************************        AP FlightMode        **********************************/
   /*** FUNCTIONALITY TEMPORARY REMOVED ***/
     /* Temporarily Disables GPS_HOLD_MODE to be able to make it possible to adjust the Hold-position when moving the sticks.*/
-    //#define AP_MODE 40  // Create a deadspan for GPS.
+    #define AP_MODE 40  // Create a deadspan for GPS.
         
   /************************   Assisted AcroTrainer    ************************************/
     /* Train Acro with auto recovery. Value set the point where ANGLE_MODE takes over.
@@ -595,7 +596,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
        PITCH, ROLL and YAW is centered and THROTTLE is set to FAILSAFE_THROTTLE value. You must set this value to descending about 1m/s or so
        for best results. This value is depended from your configuration, AUW and some other params.  Next, after FAILSAFE_OFF_DELAY the copter is disarmed, 
        and motors is stopped. If RC pulse coming back before reached FAILSAFE_OFF_DELAY time, after the small quard time the RC control is returned to normal. */
-    //#define FAILSAFE                                // uncomment  to activate the failsafe function
+    #define FAILSAFE                                // uncomment  to activate the failsafe function
     #define FAILSAFE_DELAY     10                     // Guard time for failsafe activation after signal lost. 1 step = 0.1sec - 1sec in example
     #define FAILSAFE_OFF_DELAY 200                    // Time for Landing before motors stop in 0.1sec. 1 step = 0.1sec - 20sec in example
     #define FAILSAFE_THROTTLE  (MINTHROTTLE + 200)    // (*) Throttle level used for landing - may be relative to MINTHROTTLE - as in this case
@@ -669,7 +670,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
                                    // note: Now a GPS can share MSP on the same port. The only constrain is to not use it simultaneously, and use the same port speed.
 
     // avoid using 115200 baud because with 16MHz arduino the 115200 baudrate have more than 2% speed error (57600 have 0.8% error)
-    #define GPS_BAUD   57600       // GPS_BAUD will override SERIALx_COM_SPEED for the selected port
+    //#define GPS_BAUD   57600       // GPS_BAUD will override SERIALx_COM_SPEED for the selected port
 
    /* GPS protocol 
        NMEA  - Standard NMEA protocol GGA, GSA and RMC  sentences are needed
@@ -700,7 +701,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
       - No GPS FIX -> LED blink at speed of incoming GPS frames
       - Fix and sat no. bellow 5 -> LED off
       - Fix and sat no. >= 5 -> LED blinks, one blink for 5 sat, two blinks for 6 sat, three for 7 ... */
-    #define GPS_LED_INDICATOR
+    //#define GPS_LED_INDICATOR
 
    //Enables the MSP_WP command set , which is used by WinGUI for displaying an setting up navigation
    //#define USE_MSP_WP
@@ -731,28 +732,28 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
 //#define GPS_FILTERING                 //(**)
 
 // if we are within this distance to a waypoint then we consider it reached (distance is in cm)
-#define GPS_WP_RADIUS              100      //(**)
+#define GPS_WP_RADIUS              5      //(**)
 
 // Safe WP distance, do not start mission if the first wp distance is larger than this number (in meters)
 // Also aborts mission if the next waypoint distance is more than this number
-#define SAFE_WP_DISTANCE           500      //(**)
+#define SAFE_WP_DISTANCE           10      //(**)
 
 //Maximu allowable navigation altitude (in meters) automatic altitude control will not go above this height
-#define MAX_NAV_ALTITUDE           100     //(**)
+#define MAX_NAV_ALTITUDE           2.5     //(**)
 
 // minimum speed when approach waypoint
-#define NAV_SPEED_MIN              100    // cm/sec //(**)
+#define NAV_SPEED_MIN              0    // cm/sec //(**)
 // maximum speed to reach between waypoints
-#define NAV_SPEED_MAX              400    // cm/sec //(**)
+#define NAV_SPEED_MAX              100    // cm/sec //(**)
 // Slow down to zero when reaching waypoint (same as NAV_SPEED_MIN = 0)
-#define NAV_SLOW_NAV               0      //(**)
+#define NAV_SLOW_NAV               1      //(**)
 // Weight factor of the crosstrack error in navigation calculations (do not touch)
 #define CROSSTRACK_GAIN            .4     //(**)
 // Maximum allowable banking than navigation outputs
 #define NAV_BANK_MAX 3000                 //(**)
 
 //Defines the RTH altitude. 0 means keep current alt during RTH (in meters)
-#define RTH_ALTITUDE               15        //(**)
+#define RTH_ALTITUDE               0        //(**)
 //Wait to reach RTH alt before start moving to home (0-no, 1-yes)
 #define WAIT_FOR_RTH_ALT           1         //(**)
 
@@ -764,10 +765,10 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
 
 //If FENCE DISTANCE is larger than 0 then copter will switch to RTH when it farther from home
 //than the defined number in meters
-#define FENCE_DISTANCE      600
+#define FENCE_DISTANCE      20
 
 //This governs the descent speed during landing. 100 is equals approc 50cm/sec
-#define LAND_SPEED          100
+#define LAND_SPEED          10
 
 
     //#define ONLY_ALLOW_ARM_WITH_GPS_3DFIX      // Only allow FC arming if GPS has a 3D fix.
@@ -891,7 +892,7 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
        with R1=33k and R2=51k
        vbat = [0;1023]*16/VBATSCALE
        must be associated with #define BUZZER ! */
-    //#define VBAT              // uncomment this line to activate the vbat code
+    #define VBAT              // uncomment this line to activate the vbat code
     #define VBATSCALE       131 // (*) (**) change this value if readed Battery voltage is different than real voltage
     #define VBATNOMINAL     126 // 12,6V full battery nominal voltage - only used for lcd.telemetry
     #define VBATLEVEL_WARN1 107 // (*) (**) 10,7V
@@ -1017,7 +1018,7 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
   /**************************************************************************************/
     /* motors will not spin when the throttle command is in low position
        this is an alternative method to stop immediately the motors */
-    //#define MOTOR_STOP
+    #define MOTOR_STOP
 
     /* some radios have not a neutral point centered on 1500. can be changed here */
     #define MIDRC 1500
@@ -1199,4 +1200,7 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
 /*************************************************************************************************/
 
 #endif /* CONFIG_H_ */
+
+
+
 

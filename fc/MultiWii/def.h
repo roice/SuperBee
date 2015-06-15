@@ -1638,6 +1638,28 @@
   #undef INTERNAL_I2C_PULLUPS
 #endif
 
+/* Added by Roice, 20150614 */
+#if defined(SUPERBEE)
+/* SuperBee uses NanoMWC for flight control */
+  #define MPU6050 
+  #define HMC5883 
+  #define BMP085 
+  #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  Y; imu.accADC[PITCH]  = -X; imu.accADC[YAW]  =  Z;}
+  #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  X; imu.gyroADC[PITCH] =  Y; imu.gyroADC[YAW] = -Z;}
+  #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = -Y; imu.magADC[PITCH]  = -X; imu.magADC[YAW]  =  Z;} 
+  #undef INTERNAL_I2C_PULLUPS
+/* SuperBee uses OptiTrack MotionCapture System for navigation
+ * The 3D accurate position is transmitted to NanoMWC via serial port, which shares with communication
+ * the same serial port
+ * The horizontal position is converted to GPS Lat/Lon format, and vertical position to Sonar format
+ * The SuperBee Serial Protocol started with the preamble of '$B'
+ */
+  #define GPS   // OptiTrack data is converted to 'fake' GPS data
+  #undef I2C_GPS
+  #undef GPS_SERIAL
+  #define OPT   // for OptiTrack Motion Capture
+#endif
+
 /**************************************************************************************/
 /***************              Sensor Type definitions              ********************/
 /**************************************************************************************/
@@ -2001,3 +2023,6 @@
 #endif
 
 #endif /* DEF_H_ */
+
+
+
