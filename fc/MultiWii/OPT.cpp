@@ -9,11 +9,11 @@
 #define OPT_Z_MIN   -100000     // 10 meters
 #define OPT_Z_MAX   10*1000*10     // 10 meters
 
-/* this struct is strange, or Arduino is strange!
+/* these struct is strange, or Arduino is strange!
  * I included "MultiWii.h" but the compiler still
  * can't find the prototype of this struct
  * as if the header files are not included at all
- * So I pasted it here, just to get it working*/
+ * So I pasted them here, just to get them working*/
 #define GPS 1
 #define MAG 1
 typedef struct {
@@ -51,15 +51,27 @@ typedef struct {
 #endif
 } flags_struct_t;
 
+typedef struct {
+  int32_t  EstAlt;
+  int16_t  vario;
+} alt_t;
+
 /* Global parameters */
 struct pos_t pos_enu;
+struct pos_flag_t
+{
+    // gps and alt new data flag
+    uint8_t gps;
+    uint8_t alt;
+};
+struct opt_flag_t opt_flag; // new data flag
 
 /* extern parameters */
 extern int32_t  GPS_coord[2];
 extern flags_struct_t f;
 extern uint8_t  GPS_update;
 extern uint8_t  GPS_numSat;
-
+extern alt_t alt;
 
 static void enu2llh(const double *e, double *pos);
 
@@ -92,7 +104,6 @@ uint8_t OPT_NewData(void)
     //save to global parameter for GPS.cpp use
     GPS_coord[0] = int32_t(converted_pos[0] * 100000000); // 0.00000001 degree
     GPS_coord[1] = int32_t(converted_pos[1] * 100000000);
-    //int32_t(converted_pos[2] * 10000);     // 0.0001 m
     f.GPS_FIX = 1;  // have a good GPS 3D FIX
     //Mark that a new GPS frame is available for GPS_Compute()
     //GPS_Frame = 1;
@@ -100,6 +111,22 @@ uint8_t OPT_NewData(void)
     if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
     GPS_numSat = 8; // >5 indicates good GPS signal
 
+    /* Refresh Altitude */
+    alt.EstAlt = int32_t(converted_pos[2] * 1000);     // 1 mm
+    opt_flag.alt = 1;    // indicates a new EstAlt data is available
+
+    return 1;
+}
+
+uint8_t OPT_Alt_Filter(void)
+{
+//    opt_flag[1] = 0;    //
+    return 1;
+}
+
+uint8_t OPT_Alt_Compute(void)
+{
+ //   opt_flag[1] = 0;    //
     return 1;
 }
 

@@ -1643,7 +1643,7 @@
 /* SuperBee uses NanoMWC for flight control */
   #define MPU6050 
   #define HMC5883 
-  #define BMP085 
+  //#define BMP085  // will use OptiTrack 
   #define ACC_ORIENTATION(X, Y, Z)  {imu.accADC[ROLL]  =  Y; imu.accADC[PITCH]  = -X; imu.accADC[YAW]  =  Z;}
   #define GYRO_ORIENTATION(X, Y, Z) {imu.gyroADC[ROLL] =  X; imu.gyroADC[PITCH] =  Y; imu.gyroADC[YAW] = -Z;}
   #define MAG_ORIENTATION(X, Y, Z)  {imu.magADC[ROLL]  = -Y; imu.magADC[PITCH]  = -X; imu.magADC[YAW]  =  Z;} 
@@ -1658,6 +1658,7 @@
   #define I2C_GPS   // just to use parameter GPS_Frame in file GPS.cpp
   #undef GPS_SERIAL
   #define OPT   // for OptiTrack Motion Capture
+  #undef BARO   // will use OptiTrack
 #endif
 
 /**************************************************************************************/

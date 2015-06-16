@@ -17,6 +17,8 @@ struct pos_t
 };
 
 uint8_t OPT_NewData(void);
+uint8_t OPT_Alt_Filter(void);
+uint8_t OPT_Alt_Compute(void);
 
 #endif /* OPT_H_ */
 

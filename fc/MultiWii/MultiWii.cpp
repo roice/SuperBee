@@ -1245,12 +1245,16 @@ void loop () {
         taskOrder++;
         #if BARO
           if (Baro_update() != 0) break; // for MS baro: I2C set and get: 220 us  -  presure and temperature computation 160 us
+        #elif defined(SUPERBEE)
+          if (OPT_Alt_Filter() != 0) break; // an average filter
         #endif
       case 2:
         taskOrder++;
         #if BARO
           if (getEstimatedAltitude() != 0) break; // 280 us
-        #endif    
+        #elif defined(SUPERBEE)
+          if (OPT_Alt_Compute() != 0) break;
+        #endif
       case 3:
         taskOrder++;
         #if GPS
@@ -1364,7 +1368,38 @@ void loop () {
   }
   #endif //BARO
 
+  /* Added by Roice, 20150616 */
+  #if defined(SUPERBEE)
+  if (f.BARO_MODE) {
+    static uint8_t isAltHoldChanged = 0;
+    static int16_t AltHoldCorr = 0;
 
+    #if GPS
+    if (f.LAND_IN_PROGRESS) { //If autoland is in progress then take over and decrease alt slowly
+      AltHoldCorr -= GPS_conf.land_speed;
+      if(abs(AltHoldCorr) > 512) {
+        AltHold += AltHoldCorr/512;
+        AltHoldCorr %= 512;
+      }
+    }
+    #endif
+    //IF Throttle not ignored then allow change altitude with the stick....
+    if ( (abs(rcCommand[THROTTLE]-initialThrottleHold)>ALT_HOLD_THROTTLE_NEUTRAL_ZONE) && !f.THROTTLE_IGNORED) {
+      // Slowly increase/decrease AltHold proportional to stick movement ( +100 throttle gives ~ +50 cm in 1 second with cycle time about 3-4ms)
+      AltHoldCorr+= rcCommand[THROTTLE] - initialThrottleHold;
+      if(abs(AltHoldCorr) > 512) {
+        AltHold += AltHoldCorr/512;
+        AltHoldCorr %= 512;
+      }
+      isAltHoldChanged = 1;
+    } else if (isAltHoldChanged) {
+      AltHold = alt.EstAlt;
+      isAltHoldChanged = 0;
+    }
+    rcCommand[THROTTLE] = initialThrottleHold + BaroPID;
+  }
+  #endif  //SuperBee
+  /* End of modification */
 
   #if defined(THROTTLE_ANGLE_CORRECTION)
   if(f.ANGLE_MODE || f.HORIZON_MODE) {
