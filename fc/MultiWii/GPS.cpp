@@ -1521,7 +1521,8 @@ bool GPS_newFrame(uint8_t data) {
 #endif //GPS SERIAL
 
 
-
+/* Modified by Roice, to reduce memory waste, 20150616 */
+#if !(defined(SUPERBEE) && defined(OPT))
 
 /**************************************************************************************/
 /***************                       I2C GPS                     ********************/
@@ -1569,7 +1570,7 @@ uint8_t GPS_NewData(void) {
   return 0;
 }
 #endif //I2C_GPS
-
+#endif // SUPERBEE
 #endif // GPS Defined
 
 

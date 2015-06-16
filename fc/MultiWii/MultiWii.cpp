@@ -1256,15 +1256,14 @@ void loop () {
         #if GPS
           if (GPS_Compute() != 0) break;  // performs computation on new frame only if present
           #if defined(I2C_GPS)
-          if (GPS_NewData() != 0) break;  // 160 us with no new data / much more with new data 
-          #endif
-
-/* Added by Roice, 20150614 */
-          #if (defined(SUPERBEE) && defined(OPT))  // OptiTrack Motion Capture for 3D navigation
-          //if (OPT_NewData() != 0) break;
-          #endif
-
-        #endif
+            /* Added by Roice, 20150614 */
+            #if (defined(SUPERBEE) && defined(OPT))  // OptiTrack Motion Capture for 3D navigation
+            //if (OPT_NewData() != 0) break;
+            #else
+            if (GPS_NewData() != 0) break;  // 160 us with no new data / much more with new data
+            #endif
+          #endif    //I2C_GPS
+        #endif  // GPS
       case 4:
         taskOrder=0;
         #if SONAR

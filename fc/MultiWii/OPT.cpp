@@ -2,11 +2,11 @@
 #include "OPT.h"    // for pos_t struct type and some defs
 
 /* OptiTrack arena boundary */
-#define OPT_X_MIN   -10*1000*10     // 10 meters
+#define OPT_X_MIN   -100000     // 10 meters
 #define OPT_X_MAX   10*1000*10     // 10 meters
-#define OPT_Y_MIN   -10*1000*10     // 10 meters
+#define OPT_Y_MIN   -100000     // 10 meters
 #define OPT_Y_MAX   10*1000*10     // 10 meters
-#define OPT_Z_MIN   -10*1000*10     // 10 meters
+#define OPT_Z_MIN   -100000     // 10 meters
 #define OPT_Z_MAX   10*1000*10     // 10 meters
 
 /* this struct is strange, or Arduino is strange!
@@ -57,7 +57,6 @@ struct pos_t pos_enu;
 /* extern parameters */
 extern int32_t  GPS_coord[2];
 extern flags_struct_t f;
-extern uint8_t GPS_Frame;
 extern uint8_t  GPS_update;
 extern uint8_t  GPS_numSat;
 
@@ -68,10 +67,6 @@ uint8_t OPT_NewData(void)
 {
     double position_e[3], converted_pos[3];
     // check if position data is valid
-    if (    (pos_enu.north < OPT_X_MIN) || (pos_enu.north > OPT_X_MAX) || \
-            (pos_enu.east < OPT_Y_MIN) || (pos_enu.east > OPT_Y_MAX) || \
-            (pos_enu.up < OPT_Z_MIN) || (pos_enu.up > OPT_Z_MAX))
-        return 0;
 
     /* convert to and fill GPS and Sonar data */
 
@@ -100,7 +95,7 @@ uint8_t OPT_NewData(void)
     //int32_t(converted_pos[2] * 10000);     // 0.0001 m
     f.GPS_FIX = 1;  // have a good GPS 3D FIX
     //Mark that a new GPS frame is available for GPS_Compute()
-    GPS_Frame = 1;
+    //GPS_Frame = 1;
     //Blink GPS update
     if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
     GPS_numSat = 8; // >5 indicates good GPS signal

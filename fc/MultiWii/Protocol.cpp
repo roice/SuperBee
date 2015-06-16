@@ -384,6 +384,10 @@ void evaluateSBSPcommand(uint8_t c)
             s_struct_w((uint8_t*)&pos_enu, 3*4);
             /* Convert OPT data to GPS LLH and refresh GPS state */
             if (OPT_NewData() == 0) break;
+            //Mark that a new GPS frame is available for GPS_Compute()
+            #if defined(I2C_GPS)    // Actually I don't know why removing this def check will cause compiling failure
+            GPS_Frame = 1;
+            #endif
 
             // for debug
             extern int32_t  GPS_coord[2];
