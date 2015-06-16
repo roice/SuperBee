@@ -692,7 +692,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
        You have to use at least I2CGpsNav code r33 */
     /* all functionnalities allowed by SERIAL_GPS are now available for I2C_GPS: all relevant navigation computations are gathered in the main FC */
 
-    #define I2C_GPS
+    //#define I2C_GPS
 
     // If your I2C GPS board has Sonar support enabled
     //#define I2C_GPS_SONAR

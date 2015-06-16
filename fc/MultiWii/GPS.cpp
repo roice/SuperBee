@@ -186,8 +186,12 @@ uint8_t GPS_Compute(void) {
   int32_t  dir;         //temp variable to store dir to copter
   static uint32_t nav_loopTimer;
 
+  #if defined(SUPERBEE)
+  if(opt_flag.gps == 0) return 0; else opt_flag.gps = 0;
+  #else
   //check that we have a valid frame, if not then return immediatly
   if (GPS_Frame == 0) return 0; else GPS_Frame = 0;
+  #endif
 
   //check home position and set it if it was not set
   if (f.GPS_FIX && GPS_numSat >= 5) {

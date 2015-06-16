@@ -6,7 +6,7 @@
 /* Added by Roice, 20150615 */
 /* position struct, refreshed by SBSP messages */
 /* processed in OPT_NewData function */
-struct pos_t
+struct opt_pos_enu_t
 {
     // local ENU, accuracy: 0.1 milimeters
     // example: if up coordinate is -330.6 mm
@@ -16,7 +16,15 @@ struct pos_t
     int32_t up;
 };
 
-uint8_t OPT_NewData(void);
+struct opt_flag_t
+{
+    // new data flag
+    uint8_t opt;
+    uint8_t gps;
+    uint8_t alt;
+};
+
+uint8_t OPT_GPS_NewData(void);
 uint8_t OPT_Alt_Filter(void);
 uint8_t OPT_Alt_Compute(void);
 

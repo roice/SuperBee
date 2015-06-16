@@ -169,6 +169,10 @@ uint8_t  rcOptions[CHECKBOXITEMS];
 int32_t  AltHold; // in cm
 int16_t  sonarAlt;
 int16_t  BaroPID = 0;
+/* Modified by Roice, 20150616 */
+#if defined(SUPERBEE)
+int16_t  AltPID = 0;
+#endif
 int16_t  errorAltitudeI = 0;
 
 // **************
@@ -1260,14 +1264,12 @@ void loop () {
         #if GPS
           if (GPS_Compute() != 0) break;  // performs computation on new frame only if present
           #if defined(I2C_GPS)
-            /* Added by Roice, 20150614 */
-            #if (defined(SUPERBEE) && defined(OPT))  // OptiTrack Motion Capture for 3D navigation
-            //if (OPT_NewData() != 0) break;
-            #else
             if (GPS_NewData() != 0) break;  // 160 us with no new data / much more with new data
-            #endif
-          #endif    //I2C_GPS
-        #endif  // GPS
+          /* Modified by Roice, 20150614 */
+          #elif (defined(SUPERBEE) && defined(OPT))  // OptiTrack Motion Capture for 3D navigation
+            if (OPT_GPS_NewData() != 0) break;
+          #endif
+        #endif
       case 4:
         taskOrder=0;
         #if SONAR
@@ -1366,10 +1368,8 @@ void loop () {
     }
     rcCommand[THROTTLE] = initialThrottleHold + BaroPID;
   }
-  #endif //BARO
-
   /* Added by Roice, 20150616 */
-  #if defined(SUPERBEE)
+  #elif defined(SUPERBEE)
   if (f.BARO_MODE) {
     static uint8_t isAltHoldChanged = 0;
     static int16_t AltHoldCorr = 0;
@@ -1384,7 +1384,7 @@ void loop () {
     }
     #endif
     //IF Throttle not ignored then allow change altitude with the stick....
-    if ( (abs(rcCommand[THROTTLE]-initialThrottleHold)>ALT_HOLD_THROTTLE_NEUTRAL_ZONE) && !f.THROTTLE_IGNORED) {
+    if ( (abs(rcCommand[THROTTLE]-initialThrottleHold)>ALT_HOLD_THROTTLE_NEUTRAL_ZONE) ){// && !f.THROTTLE_IGNORED) {
       // Slowly increase/decrease AltHold proportional to stick movement ( +100 throttle gives ~ +50 cm in 1 second with cycle time about 3-4ms)
       AltHoldCorr+= rcCommand[THROTTLE] - initialThrottleHold;
       if(abs(AltHoldCorr) > 512) {
@@ -1396,7 +1396,7 @@ void loop () {
       AltHold = alt.EstAlt;
       isAltHoldChanged = 0;
     }
-    rcCommand[THROTTLE] = initialThrottleHold + BaroPID;
+    rcCommand[THROTTLE] = initialThrottleHold + AltPID;
   }
   #endif  //SuperBee
   /* End of modification */

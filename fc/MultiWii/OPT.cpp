@@ -9,6 +9,48 @@
 #define OPT_Z_MIN   -100000     // 10 meters
 #define OPT_Z_MAX   10*1000*10     // 10 meters
 
+/* copied from Sensors.h */
+#define ACC_1G 512  // MPU6050
+#define ACC_VelScale (9.80665f / 10000.0f / ACC_1G)
+
+/* copied from IMU */
+#define UPDATE_INTERVAL 25000    // 40hz update rate (20hz LPF on acc)
+#define ACC_Z_DEADBAND (ACC_1G>>5) // was 40 instead of 32 now
+#define applyDeadband(value, deadband)  \
+  if(abs(value) < deadband) {           \
+    value = 0;                          \
+  } else if(value > 0){                 \
+    value -= deadband;                  \
+  } else if(value < 0){                 \
+    value += deadband;                  \
+  }
+#define MultiS16X16to32(longRes, intIn1, intIn2) \
+asm volatile ( \
+"clr r26 \n\t" \
+"mul %A1, %A2 \n\t" \
+"movw %A0, r0 \n\t" \
+"muls %B1, %B2 \n\t" \
+"movw %C0, r0 \n\t" \
+"mulsu %B2, %A1 \n\t" \
+"sbc %D0, r26 \n\t" \
+"add %B0, r0 \n\t" \
+"adc %C0, r1 \n\t" \
+"adc %D0, r26 \n\t" \
+"mulsu %B1, %A2 \n\t" \
+"sbc %D0, r26 \n\t" \
+"add %B0, r0 \n\t" \
+"adc %C0, r1 \n\t" \
+"adc %D0, r26 \n\t" \
+"clr r1 \n\t" \
+: \
+"=&r" (longRes) \
+: \
+"a" (intIn1), \
+"a" (intIn2) \
+: \
+"r26" \
+)
+
 /* these struct is strange, or Arduino is strange!
  * I included "MultiWii.h" but the compiler still
  * can't find the prototype of this struct
@@ -50,20 +92,147 @@ typedef struct {
   uint8_t LAND_IN_PROGRESS: 1;
 #endif
 } flags_struct_t;
-
 typedef struct {
   int32_t  EstAlt;
   int16_t  vario;
 } alt_t;
+enum box {
+  BOXARM,
+  #if ACC
+    BOXANGLE,
+    BOXHORIZON,
+  #endif
+  #if BARO && (!defined(SUPPRESS_BARO_ALTHOLD))
+    BOXBARO,
+  #endif
+  #ifdef VARIOMETER
+    BOXVARIO,
+  #endif
+  BOXMAG,
+  #if defined(HEADFREE)
+    BOXHEADFREE,
+    BOXHEADADJ, // acquire heading for HEADFREE mode
+  #endif
+  #if defined(SERVO_TILT) || defined(GIMBAL)  || defined(SERVO_MIX_TILT)
+    BOXCAMSTAB,
+  #endif
+  #if defined(CAMTRIG)
+    BOXCAMTRIG,
+  #endif
+  #if GPS
+    BOXGPSHOME,
+    BOXGPSHOLD,
+  #endif
+  #if defined(FIXEDWING) || defined(HELICOPTER)
+    BOXPASSTHRU,
+  #endif
+  #if defined(BUZZER)
+    BOXBEEPERON,
+  #endif
+  #if defined(LED_FLASHER)
+    BOXLEDMAX, // we want maximum illumination
+    BOXLEDLOW, // low/no lights
+  #endif
+  #if defined(LANDING_LIGHTS_DDR)
+    BOXLLIGHTS, // enable landing lights at any altitude
+  #endif
+  #ifdef INFLIGHT_ACC_CALIBRATION
+    BOXCALIB,
+  #endif
+  #ifdef GOVERNOR_P
+    BOXGOV,
+  #endif
+  #ifdef OSD_SWITCH
+    BOXOSD,
+  #endif
+  #if GPS
+    BOXGPSNAV,
+    BOXLAND,
+  #endif
+  CHECKBOXITEMS
+};
+enum pid {
+  PIDROLL,
+  PIDPITCH,
+  PIDYAW,
+  PIDALT,
+  PIDPOS,
+  PIDPOSR,
+  PIDNAVR,
+  PIDLEVEL,
+  PIDMAG,
+  PIDVEL,     // not used currently
+  PIDITEMS
+};
+struct pid_ {
+  uint8_t P8;
+  uint8_t I8;
+  uint8_t D8;
+};
+struct servo_conf_ {  // this is a generic way to configure a servo, every multi type with a servo should use it
+  int16_t min;        // minimum value, must be more than 1020 with the current implementation
+  int16_t max;        // maximum value, must be less than 2000 with the current implementation
+  int16_t middle;     // default should be 1500
+  int8_t  rate;       // range [-100;+100] ; can be used to ajust a rate 0-100% and a direction
+};
+typedef struct {
+  pid_    pid[PIDITEMS];
+  uint8_t rcRate8;
+  uint8_t rcExpo8;
+  uint8_t rollPitchRate;
+  uint8_t yawRate;
+  uint8_t dynThrPID;
+  uint8_t thrMid8;
+  uint8_t thrExpo8;
+  int16_t angleTrim[2]; 
+  #if defined(EXTENDED_AUX_STATES)
+   uint32_t activate[CHECKBOXITEMS];  //Extended aux states define six different aux state for each aux channel
+  #else
+   uint16_t activate[CHECKBOXITEMS];
+  #endif 
+  uint8_t powerTrigger1;
+  #if MAG
+    int16_t mag_declination;
+  #endif
+  servo_conf_ servoConf[8];
+  #if defined(GYRO_SMOOTHING)
+    uint8_t Smoothing[3];
+  #endif
+  #if defined (FAILSAFE)
+    int16_t failsafe_throttle;
+  #endif
+  #ifdef VBAT
+    uint8_t vbatscale;
+    uint8_t vbatlevel_warn1;
+    uint8_t vbatlevel_warn2;
+    uint8_t vbatlevel_crit;
+  #endif
+  #ifdef POWERMETER
+    uint8_t pint2ma;
+  #endif
+  #ifdef POWERMETER_HARD
+    uint16_t psensornull;
+  #endif
+  #ifdef MMGYRO
+    uint8_t mmgyro;
+  #endif
+  #ifdef ARMEDTIMEWARNING
+    uint16_t armedtimewarning;
+  #endif
+  int16_t minthrottle;
+  #ifdef GOVERNOR_P
+   int16_t governorP;
+   int16_t governorD;
+  #endif
+  #ifdef YAW_COLL_PRECOMP
+   uint8_t yawCollPrecomp;
+   uint16_t yawCollPrecompDeadband;
+  #endif
+  uint8_t  checksum;      // MUST BE ON LAST POSITION OF CONF STRUCTURE !
+} conf_t;
 
 /* Global parameters */
-struct pos_t pos_enu;
-struct pos_flag_t
-{
-    // gps and alt new data flag
-    uint8_t gps;
-    uint8_t alt;
-};
+struct opt_pos_enu_t pos_enu;
 struct opt_flag_t opt_flag; // new data flag
 
 /* extern parameters */
@@ -72,11 +241,21 @@ extern flags_struct_t f;
 extern uint8_t  GPS_update;
 extern uint8_t  GPS_numSat;
 extern alt_t alt;
+extern int32_t AltHold; // actually in mm
+extern int16_t AltPID;
+extern conf_t   conf;
+extern int16_t  errorAltitudeI;
+extern int16_t accZ;
+extern int32_t  __attribute__ ((noinline)) mul(int16_t a, int16_t b);
+
+/* local parameters */
 
 static void enu2llh(const double *e, double *pos);
 
-uint8_t OPT_NewData(void)
+uint8_t OPT_GPS_NewData(void)
 {
+    if (opt_flag.opt == 0) return 0;
+
     double position_e[3], converted_pos[3];
     // check if position data is valid
 
@@ -110,6 +289,8 @@ uint8_t OPT_NewData(void)
     //Blink GPS update
     if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
     GPS_numSat = 8; // >5 indicates good GPS signal
+    opt_flag.opt = 0;   // clear opt new data flag
+    opt_flag.gps = 1;   // set gps new data flag
 
     /* Refresh Altitude */
     alt.EstAlt = int32_t(converted_pos[2] * 1000);     // 1 mm
@@ -120,13 +301,64 @@ uint8_t OPT_NewData(void)
 
 uint8_t OPT_Alt_Filter(void)
 {
-//    opt_flag[1] = 0;    //
+    if (opt_flag.alt == 0) return 0;
+
+    /* Smooth Altitude data */
+
     return 1;
 }
 
 uint8_t OPT_Alt_Compute(void)
 {
- //   opt_flag[1] = 0;    //
+    static float vel = 0.0f;
+    static uint16_t previousT;
+    uint16_t currentT = micros();
+    uint16_t    dTime;
+
+    dTime = currentT - previousT;
+    if (dTime < UPDATE_INTERVAL) return 0;
+    previousT = currentT;
+
+    if (opt_flag.alt == 0) return 0;
+
+    /* compute PID */
+    #if !defined(SUPPRESS_BARO_ALTHOLD)
+    //P
+    int16_t error16 = constrain(AltHold - alt.EstAlt, -300, 300);//300mm
+    applyDeadband(error16, 10); //remove small P parametr to reduce noise near zero position, deadband = 10mm
+    AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>7), -150, +150);
+
+    //I
+    errorAltitudeI += conf.pid[PIDALT].I8 * error16 >>6;
+    errorAltitudeI = constrain(errorAltitudeI,-30000,30000);
+    AltPID += errorAltitudeI>>9; //I in range +/-60
+ 
+    applyDeadband(accZ, ACC_Z_DEADBAND);
+
+    static int32_t lastAlt;
+    // could only overflow with a difference of 32m, which is highly improbable here
+    int16_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / UPDATE_INTERVAL));
+
+    lastAlt = alt.EstAlt;
+
+    AltVel = constrain(AltVel, -300, 300); // constrain baro velocity +/- 30cm/s
+    applyDeadband(AltVel, 10); // to reduce noise near zero
+
+    // Integrator - velocity, cm/sec
+    vel += accZ * ACC_VelScale * dTime;
+
+    // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity). 
+    // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e without delay
+    vel = vel * 0.985f + AltVel * 0.015f;
+
+    //D
+    alt.vario = vel;
+    applyDeadband(alt.vario, 5);
+    AltPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>4, -150, 150);
+    #endif
+
+    opt_flag.alt = 0;   // clear alt new data flag
+
     return 1;
 }
 

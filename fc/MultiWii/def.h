@@ -1655,10 +1655,10 @@
  * The SuperBee Serial Protocol started with the preamble of '$B'
  */
   #define GPS 1  // OptiTrack data is converted to 'fake' GPS data
-  #define I2C_GPS   // just to use parameter GPS_Frame in file GPS.cpp
+  #undef I2C_GPS
   #undef GPS_SERIAL
   #define OPT   // for OptiTrack Motion Capture
-  #undef BARO   // will use OptiTrack
+  #define BARO 0   // will use OptiTrack instead of BARO
 #endif
 
 /**************************************************************************************/

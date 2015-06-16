@@ -104,7 +104,8 @@ static uint8_t cmdMSP[UART_NUMBER];
 
 /* Added by Roice, 20150616 */
 #if (defined(SUPERBEE) && defined(OPT))
-extern struct pos_t pos_enu;
+extern struct opt_pos_enu_t pos_enu;
+extern struct opt_flag_t    opt_flag;
 #endif
 /* End of modification */
 
@@ -382,16 +383,12 @@ void evaluateSBSPcommand(uint8_t c)
         case SBSP_FRESH_POS_OPT:
             sbspAck();
             s_struct_w((uint8_t*)&pos_enu, 3*4);
-            /* Convert OPT data to GPS LLH and refresh GPS state */
-            if (OPT_NewData() == 0) break;
-            //Mark that a new GPS frame is available for GPS_Compute()
-            #if defined(I2C_GPS)    // Actually I don't know why removing this def check will cause compiling failure
-            GPS_Frame = 1;
-            #endif
-
+            // Mark that a new opt data is available
+            opt_flag.opt = 1;
+            
             // for debug
-            extern int32_t  GPS_coord[2];
-            sbsp_struct((uint8_t*)&GPS_coord, 2*4);
+            //extern int32_t  GPS_coord[2];
+            //sbsp_struct((uint8_t*)&GPS_coord, 2*4);
             /*
             pos_enu.east = 0x12345678;
             pos_enu.north = 0x12345678;
@@ -969,7 +966,7 @@ void SerialWrite16(uint8_t port, int16_t val)
 }
 
 
-#ifdef DEBUGMSG
+#if defined(DEBUGMSG)
 void debugmsg_append_str(const char *str) {
   while(*str) {
     debug_buf[head_debug++] = *str++;

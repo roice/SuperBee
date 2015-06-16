@@ -187,7 +187,11 @@ void rotateV32( t_int32_t_vector *v,int16_t* delta) {
   v->V32.Y +=  mul(delta[PITCH] ,  Z)  + mul(delta[YAW]   , X);
 }
 
+#if defined(SUPERBEE)
+int16_t accZ = 0;
+#else
 static int16_t accZ=0;
+#endif
 
 void getEstimatedAttitude(){
   uint8_t axis;
