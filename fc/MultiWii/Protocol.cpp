@@ -386,6 +386,8 @@ void evaluateSBSPcommand(uint8_t c)
             if (OPT_NewData() == 0) break;
 
             // for debug
+            extern int32_t  GPS_coord[2];
+            sbsp_struct((uint8_t*)&GPS_coord, 2*4);
             /*
             pos_enu.east = 0x12345678;
             pos_enu.north = 0x12345678;
