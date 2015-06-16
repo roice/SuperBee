@@ -382,10 +382,8 @@ void evaluateSBSPcommand(uint8_t c)
         case SBSP_FRESH_POS_OPT:
             sbspAck();
             s_struct_w((uint8_t*)&pos_enu, 3*4);
-            /* Convert OPT data to GPS LLH */
+            /* Convert OPT data to GPS LLH and refresh GPS state */
             if (OPT_NewData() == 0) break;
-            /* Refresh GPS state */
-            Refresh_GPS_state();
 
             // for debug
             /*

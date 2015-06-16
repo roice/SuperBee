@@ -28,10 +28,6 @@ void check_land(void);
 uint8_t GPS_NewData(void);
 #endif
 
-//#if defined(SUPERBEE)
-uint8_t Refresh_GPS_state(void);
-//#endif
-
 extern uint32_t wp_distance;
 extern int32_t target_bearing;
 #endif /* GPS_H_ */

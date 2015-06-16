@@ -1654,7 +1654,7 @@
  * The horizontal position is converted to GPS Lat/Lon format, and vertical position to Sonar format
  * The SuperBee Serial Protocol started with the preamble of '$B'
  */
-  #define GPS   // OptiTrack data is converted to 'fake' GPS data
+  #define GPS 1  // OptiTrack data is converted to 'fake' GPS data
   #undef I2C_GPS
   #undef GPS_SERIAL
   #define OPT   // for OptiTrack Motion Capture

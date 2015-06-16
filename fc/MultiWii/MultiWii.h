@@ -6,10 +6,6 @@
 #include "types.h"
 #include "Alarms.h"
 
-/* Added by Roice, 20150616 */
-#include "def.h"
-/* End of modification */
-
 #define MINCHECK 1100
 #define MAXCHECK 1900
 

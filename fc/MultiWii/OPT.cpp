@@ -1,9 +1,66 @@
 #include "Arduino.h"
 #include "OPT.h"    // for pos_t struct type and some defs
 
+/* OptiTrack arena boundary */
+#define OPT_X_MIN   -10*1000*10     // 10 meters
+#define OPT_X_MAX   10*1000*10     // 10 meters
+#define OPT_Y_MIN   -10*1000*10     // 10 meters
+#define OPT_Y_MAX   10*1000*10     // 10 meters
+#define OPT_Z_MIN   -10*1000*10     // 10 meters
+#define OPT_Z_MAX   10*1000*10     // 10 meters
+
+/* this struct is strange, or Arduino is strange!
+ * I included "MultiWii.h" but the compiler still
+ * can't find the prototype of this struct
+ * as if the header files are not included at all
+ * So I pasted it here, just to get it working*/
+#define GPS 1
+#define MAG 1
+typedef struct {
+  uint8_t OK_TO_ARM :1 ;
+  uint8_t ARMED :1 ;
+  uint8_t ACC_CALIBRATED :1 ;
+  uint8_t ANGLE_MODE :1 ;
+  uint8_t HORIZON_MODE :1 ;
+  uint8_t MAG_MODE :1 ;
+  uint8_t BARO_MODE :1 ;
+#ifdef HEADFREE
+  uint8_t HEADFREE_MODE :1 ;
+#endif
+#if defined(FIXEDWING) || defined(HELICOPTER)
+  uint8_t PASSTHRU_MODE :1 ;
+#endif
+  uint8_t SMALL_ANGLES_25 :1 ;
+#if MAG
+  uint8_t CALIBRATE_MAG :1 ;
+#endif
+#ifdef VARIOMETER
+  uint8_t VARIO_MODE :1;
+#endif
+  uint8_t GPS_mode: 2;               // 0-3 NONE,HOLD, HOME, NAV (see GPS_MODE_* defines
+#if BARO || GPS
+  uint8_t THROTTLE_IGNORED : 1;      // If it is 1 then ignore throttle stick movements in baro mode;
+#endif
+#if GPS
+  uint8_t GPS_FIX :1 ;
+  uint8_t GPS_FIX_HOME :1 ;
+  uint8_t GPS_BARO_MODE : 1;         // This flag is used when GPS controls baro mode instead of user (it will replace rcOptions[BARO]
+  uint8_t GPS_head_set: 1;           // it is 1 if the navigation engine got commands to control heading (SET_POI or SET_HEAD) CLEAR_HEAD will zero it
+  uint8_t LAND_COMPLETED: 1;
+  uint8_t LAND_IN_PROGRESS: 1;
+#endif
+} flags_struct_t;
+
 /* Global parameters */
 struct pos_t pos_enu;
-int32_t pos_llh[3];
+
+/* extern parameters */
+extern int32_t  GPS_coord[2];
+extern flags_struct_t f;
+extern uint8_t GPS_Frame;
+extern uint8_t  GPS_update;
+extern uint8_t  GPS_numSat;
+
 
 static void enu2llh(const double *e, double *pos);
 
@@ -35,9 +92,18 @@ uint8_t OPT_NewData(void)
      * This function is linearized and the position to be converted is limited
      * to no more than 100 m to the original pos llh 0.0 N 0.0E */
     enu2llh(position_e, converted_pos);
-    pos_llh[0] = int32_t(converted_pos[0] * 100000000); // 0.00000001 degree
-    pos_llh[1] = int32_t(converted_pos[1] * 100000000);
-    pos_llh[2] = int32_t(converted_pos[2] * 10000);     // 0.0001 m
+
+    /* Refresh GPS state */
+    //save to global parameter for GPS.cpp use
+    GPS_coord[0] = int32_t(converted_pos[0] * 100000000); // 0.00000001 degree
+    GPS_coord[1] = int32_t(converted_pos[1] * 100000000);
+    //int32_t(converted_pos[2] * 10000);     // 0.0001 m
+    f.GPS_FIX = 1;  // have a good GPS 3D FIX
+    //Mark that a new GPS frame is available for GPS_Compute()
+    GPS_Frame = 1;
+    //Blink GPS update
+    if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
+    GPS_numSat = 8; // >5 indicates good GPS signal
 
     return 1;
 }

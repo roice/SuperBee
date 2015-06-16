@@ -1,10 +1,6 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
-/* Added by Roice, 20150616 */
-#include "config.h"     // for VBAT_CELLS_NUM
-/* End of modification */
-
 enum rc {
   ROLL,
   PITCH,

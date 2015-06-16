@@ -1570,21 +1570,6 @@ uint8_t GPS_NewData(void) {
 }
 #endif //I2C_GPS
 
-//#if (defined(SUPERBEE) && defined(OPT))
-uint8_t Refresh_GPS_state(void)
-{
-    /* Refresh GPS state */
-    //save to global parameter for GPS.cpp use
-    GPS_coord[LAT] = pos_llh[0];
-    GPS_coord[LON] = pos_llh[1];
-    f.GPS_FIX = 1;  // have a good GPS 3D FIX
-    //Mark that a new GPS frame is available for GPS_Compute()
-    GPS_Frame = 1;
-    //Blink GPS update
-    if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
-    GPS_numSat = 8; // >5 indicates good GPS signal
-}
-//#endif
 #endif // GPS Defined
 
 
