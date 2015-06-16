@@ -102,9 +102,11 @@ static uint8_t checksum[UART_NUMBER];
 static uint8_t indRX[UART_NUMBER];
 static uint8_t cmdMSP[UART_NUMBER];
 
+/* Added by Roice, 20150616 */
 #if (defined(SUPERBEE) && defined(OPT))
 extern struct pos_t pos_enu;
 #endif
+/* End of modification */
 
 void evaluateOtherData(uint8_t sr);
 void evaluateCommand(uint8_t c);
@@ -380,6 +382,11 @@ void evaluateSBSPcommand(uint8_t c)
         case SBSP_FRESH_POS_OPT:
             sbspAck();
             s_struct_w((uint8_t*)&pos_enu, 3*4);
+            /* Convert OPT data to GPS LLH */
+            if (OPT_NewData() == 0) break;
+            /* Refresh GPS state */
+            Refresh_GPS_state();
+
             // for debug
             /*
             pos_enu.east = 0x12345678;
@@ -991,6 +998,7 @@ static void debugmsg_serialize(uint8_t l) {
 #else
 void debugmsg_append_str(const char *str) {};
 #endif
+
 
 
 

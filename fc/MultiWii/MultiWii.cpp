@@ -1261,7 +1261,7 @@ void loop () {
 
 /* Added by Roice, 20150614 */
           #if (defined(SUPERBEE) && defined(OPT))  // OptiTrack Motion Capture for 3D navigation
-          if (OPT_NewData() != 0) break;
+          //if (OPT_NewData() != 0) break;
           #endif
 
         #endif
@@ -1536,6 +1536,7 @@ void loop () {
   #endif 
   writeMotors();
 }
+
 
 
 

@@ -1235,3 +1235,4 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
 
 
 
+

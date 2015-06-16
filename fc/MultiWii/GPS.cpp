@@ -9,6 +9,11 @@
 #include "EEPROM.h"
 #include <math.h>
 
+/* Added by Roice, 20150616 */
+#if (defined(SUPERBEE) && defined(OPT))
+#include "OPT.h"
+#endif
+
 #if GPS
 
 //Function prototypes for other GPS functions
@@ -197,16 +202,43 @@ uint8_t GPS_Compute(void) {
       GPS_filter_index = (GPS_filter_index+1) % GPS_FILTER_VECTOR_LENGTH;
       for (axis = 0; axis< 2; axis++) {
         GPS_read[axis] = GPS_coord[axis]; //latest unfiltered data is in GPS_latitude and GPS_longitude
+
+/* Modified by Roice, 20150616 */
+        /* for LLH, 10^(-7) degree is approx. equal to 1.11 cm
+         * this is not enough for indoor nav (& OptiTrack accuracy is 1 mm)
+         * so 10^(-8) is nesessary for OptiTrack indoor nav*/
+        #if (defined(SUPERBEE) && defined(OPT))
+        // Note: GPS_FILTER_VECTOR_LENGTH must be limited below 21, as the
+        // supreme of int_32_t is 2.1*10^9
+        GPS_degree[axis] = GPS_read[axis] / 100000000;  // 10^(-8)
+        #else
         GPS_degree[axis] = GPS_read[axis] / 10000000;  // get the degree to assure the sum fits to the int32_t
+        #endif
+/* End of modification */
 
         // How close we are to a degree line ? its the first three digits from the fractions of degree
         // later we use it to Check if we are close to a degree line, if yes, disable averaging,
+/* Modified by Roice, 20150616 */
+        #if (defined(SUPERBEE) && defined(OPT))
+        fraction3[axis] = (GPS_read[axis]- GPS_degree[axis]*100000000) / 100000;
+        #else
         fraction3[axis] = (GPS_read[axis]- GPS_degree[axis]*10000000) / 10000;
+        #endif
+/* End of modification */
 
         GPS_filter_sum[axis] -= GPS_filter[axis][GPS_filter_index];
+/* Modified by Roice, 20150616 */
+        #if (defined(SUPERBEE) && defined(OPT))
+        GPS_filter[axis][GPS_filter_index] = GPS_read[axis] - (GPS_degree[axis]*100000000); 
+        GPS_filter_sum[axis] += GPS_filter[axis][GPS_filter_index];
+        GPS_filtered[axis] = GPS_filter_sum[axis] / GPS_FILTER_VECTOR_LENGTH + (GPS_degree[axis]*100000000);
+        #else
         GPS_filter[axis][GPS_filter_index] = GPS_read[axis] - (GPS_degree[axis]*10000000); 
         GPS_filter_sum[axis] += GPS_filter[axis][GPS_filter_index];
         GPS_filtered[axis] = GPS_filter_sum[axis] / GPS_FILTER_VECTOR_LENGTH + (GPS_degree[axis]*10000000);
+        #endif
+/* End of modification */
+
         if ( NAV_state == NAV_STATE_HOLD_INFINIT || NAV_state == NAV_STATE_HOLD_TIMED) {      //we use gps averaging only in poshold mode...
           if ( fraction3[axis]>1 && fraction3[axis]<999 ) GPS_coord[axis] = GPS_filtered[axis];
         }
@@ -1538,9 +1570,23 @@ uint8_t GPS_NewData(void) {
 }
 #endif //I2C_GPS
 
-
-
+//#if (defined(SUPERBEE) && defined(OPT))
+uint8_t Refresh_GPS_state(void)
+{
+    /* Refresh GPS state */
+    //save to global parameter for GPS.cpp use
+    GPS_coord[LAT] = pos_llh[0];
+    GPS_coord[LON] = pos_llh[1];
+    f.GPS_FIX = 1;  // have a good GPS 3D FIX
+    //Mark that a new GPS frame is available for GPS_Compute()
+    GPS_Frame = 1;
+    //Blink GPS update
+    if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
+    GPS_numSat = 8; // >5 indicates good GPS signal
+}
+//#endif
 #endif // GPS Defined
+
 
 
 
