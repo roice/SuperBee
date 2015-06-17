@@ -60,11 +60,11 @@
     //#define MINTHROTTLE 1120 // for Super Simple ESCs 10A
     //#define MINTHROTTLE 1064 // special ESC (simonk)
     //#define MINTHROTTLE 1050 // for brushed ESCs like ladybird
-    #define MINTHROTTLE 1150 // (*) (**)
+    #define MINTHROTTLE 1000 // (*) (**)
 
   /****************************    Motor maxthrottle    *******************************/
     /* this is the maximum value for the ESCs at full power, this value can be increased up to 2000 */
-    #define MAXTHROTTLE 1850
+    #define MAXTHROTTLE 2000
 
   /****************************    Mincommand          *******************************/
     /* this is the value for the ESCs when they are not armed
@@ -265,7 +265,7 @@
     /* camera trigger function : activated via Rc Options in the GUI, servo output=A2 on promini */
     // trigger interval can be changed via (*GUI*) or via AUX channel
     //#define CAMTRIG
-    #define CAM_TIME_HIGH 1000   // the duration of HIGH state servo expressed in ms
+    //#define CAM_TIME_HIGH 1000   // the duration of HIGH state servo expressed in ms
 
   /***********************          Airplane                       ***********************/
     //#define USE_THROTTLESERVO // For use of standard 50Hz servo on throttle.
@@ -521,7 +521,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
       //#define GYRO_LPF_256HZ     // This is the default setting, no need to uncomment, just for reference
       //#define GYRO_LPF_188HZ
       //#define GYRO_LPF_98HZ
-      #define GYRO_LPF_42HZ
+      //#define GYRO_LPF_42HZ
       //#define GYRO_LPF_20HZ
       //#define GYRO_LPF_10HZ
       //#define GYRO_LPF_5HZ       // Use this only in extreme cases, rather change motors and/or props -- setting not available on ITG3200
@@ -650,7 +650,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
 
     /* introduce a deadband around the stick center
        Must be greater than zero, comment if you dont want a deadband on roll, pitch and yaw */
-    //#define DEADBAND 6
+    #define DEADBAND 6
 
   /**************************************************************************************/
   /***********************                  GPS                **************************/
@@ -722,7 +722,10 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
 Convert the degree+minutes into decimal degree by ==> degree+minutes*(1/60)
 Note the sign on declination it could be negative or positive (WEST or EAST)
 Also note, that maqgnetic declination changes with time, so recheck your value every 3-6 months */
-#define MAG_DECLINATION  4.02f   //(**)
+/* Lat 39°6'33" N, Lon 117°10'19.4" E, Tianjin University, China
+ * Magnetic declination: -6°44', NEGATIVE(WEST), 
+ * Inclination: 57°53', Mag field strength 53992.9 nT*/
+#define MAG_DECLINATION  -6.73f   //(**)
 
 // Adds a forward predictive filterig to compensate gps lag. Code based on Jason Short's lead filter implementation
 #define GPS_LEAD_FILTER               //(**)
