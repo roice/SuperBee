@@ -258,7 +258,10 @@ void serialCom() {
         // regular data handling to detect and handle MSP and other data
         if (state == IDLE) {
           if (c=='$') state = HEADER_START;
+          /* Modified by Roice, 20150617 */
+          #ifndef SUPPRESS_OTHER_SERIAL_COMMANDS
           else evaluateOtherData(c); // evaluate all other incoming serial data
+          #endif
         } else if (state == HEADER_START) {
 
 /* Modified by Roice, 20150615 */
@@ -383,6 +386,7 @@ void evaluateSBSPcommand(uint8_t c)
         case SBSP_FRESH_POS_OPT:
             sbspAck();
             s_struct_w((uint8_t*)&pos_enu, 3*4);
+            pos_enu.time = millis(); // save current time
             // Mark that a new opt data is available
             opt_flag.opt = 1;
             

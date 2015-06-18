@@ -14,6 +14,12 @@ struct opt_pos_enu_t
     int32_t east;
     int32_t north;
     int32_t up;
+    // data time
+    // this value will be checked in OPT_GPS_New_Data
+    // if it exceeds current time a predefined period, the GPS signal
+    // must be lost, the reason is probably the plane moves out of
+    // OptiTrack range...
+    uint32_t time;  // ms
 };
 
 struct opt_flag_t

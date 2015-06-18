@@ -12,6 +12,7 @@
 /* Added by Roice, 20150616 */
 #if (defined(SUPERBEE) && defined(OPT))
 #include "OPT.h"
+extern struct opt_flag_t opt_flag;
 #endif
 
 #if GPS
@@ -188,10 +189,9 @@ uint8_t GPS_Compute(void) {
 
   #if defined(SUPERBEE)
   if(opt_flag.gps == 0) return 0; else opt_flag.gps = 0;
-  #else
+  #endif
   //check that we have a valid frame, if not then return immediatly
   if (GPS_Frame == 0) return 0; else GPS_Frame = 0;
-  #endif
 
   //check home position and set it if it was not set
   if (f.GPS_FIX && GPS_numSat >= 5) {
@@ -211,7 +211,7 @@ uint8_t GPS_Compute(void) {
         /* for LLH, 10^(-7) degree is approx. equal to 1.11 cm
          * this is not enough for indoor nav (& OptiTrack accuracy is 1 mm)
          * so 10^(-8) is nesessary for OptiTrack indoor nav*/
-        #if (defined(SUPERBEE) && defined(OPT))
+        #if defined(SUPERBEE)
         // Note: GPS_FILTER_VECTOR_LENGTH must be limited below 21, as the
         // supreme of int_32_t is 2.1*10^9
         GPS_degree[axis] = GPS_read[axis] / 100000000;  // 10^(-8)
@@ -223,7 +223,7 @@ uint8_t GPS_Compute(void) {
         // How close we are to a degree line ? its the first three digits from the fractions of degree
         // later we use it to Check if we are close to a degree line, if yes, disable averaging,
 /* Modified by Roice, 20150616 */
-        #if (defined(SUPERBEE) && defined(OPT))
+        #if defined(SUPERBEE)
         fraction3[axis] = (GPS_read[axis]- GPS_degree[axis]*100000000) / 100000;
         #else
         fraction3[axis] = (GPS_read[axis]- GPS_degree[axis]*10000000) / 10000;
@@ -232,7 +232,7 @@ uint8_t GPS_Compute(void) {
 
         GPS_filter_sum[axis] -= GPS_filter[axis][GPS_filter_index];
 /* Modified by Roice, 20150616 */
-        #if (defined(SUPERBEE) && defined(OPT))
+        #if defined(SUPERBEE)
         GPS_filter[axis][GPS_filter_index] = GPS_read[axis] - (GPS_degree[axis]*100000000); 
         GPS_filter_sum[axis] += GPS_filter[axis][GPS_filter_index];
         GPS_filtered[axis] = GPS_filter_sum[axis] / GPS_FILTER_VECTOR_LENGTH + (GPS_degree[axis]*100000000);

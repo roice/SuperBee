@@ -172,6 +172,8 @@ int16_t  BaroPID = 0;
 /* Modified by Roice, 20150616 */
 #if defined(SUPERBEE)
 int16_t  AltPID = 0;
+extern struct opt_pos_enu_t pos_enu;
+extern struct opt_flag_t opt_flag; // new data flag
 #endif
 int16_t  errorAltitudeI = 0;
 
@@ -753,6 +755,15 @@ void setup() {
     plog.armed_time = 0;   // lifetime in seconds
     //plog.running = 0;       // toggle on arm & disarm to monitor for clean shutdown vs. powercut
   #endif
+/* Added by Roice, 20150617 */
+  #if defined(SUPERBEE)
+    /* init opt related struct & value */
+    pos_enu.time = 0;
+    opt_flag.opt = 0;
+    opt_flag.gps = 0;
+    opt_flag.alt = 0;
+  #endif
+/* End of modification */
   #ifdef DEBUGMSG
     debugmsg_append_str("initialization completed\n");
   #endif
@@ -1101,7 +1112,7 @@ void loop () {
         } else {
           f.BARO_MODE = 0;
         }
-      #endif
+      #endif  // !defined(SUP...) 
       #ifdef VARIOMETER
         if (rcOptions[BOXVARIO]) {
           if (!f.VARIO_MODE) {
@@ -1111,7 +1122,20 @@ void loop () {
           f.VARIO_MODE = 0;
         }
       #endif
-    #endif
+/* Modified by Roice, 20150617 */
+    #elif defined(SUPERBEE)
+        if (rcOptions[BOXGPSHOME] || rcOptions[BOXGPSNAV] || rcOptions[BOXGPSHOLD] || rcOptions[BOXLAND]) {
+            AltHold = alt.EstAlt;
+            #if defined(ALT_HOLD_THROTTLE_MIDPOINT)
+              initialThrottleHold = ALT_HOLD_THROTTLE_MIDPOINT;
+            #else
+              initialThrottleHold = rcCommand[THROTTLE];
+            #endif
+            errorAltitudeI = 0;
+            AltPID=0;
+          }
+    #endif  // BARO
+
     if (rcOptions[BOXMAG]) {
       if (!f.MAG_MODE) {
         f.MAG_MODE = 1;
@@ -1149,7 +1173,12 @@ void loop () {
     if (f.ARMED ) {                       //Check GPS status and armed
       //TODO: implement f.GPS_Trusted flag, idea from Dramida - Check for degraded HDOP and sudden speed jumps
       if (f.GPS_FIX) {
+        /* Modified by Roice, 20150617 */
+        /* to disable GPS_numSat check..., so the only check is GPS_FIX */
+        #if !defined(SUPERBEE)
         if (GPS_numSat >5 ) {
+        #endif
+
           if (prv_gps_modes != gps_modes_check) {                           //Check for change since last loop
             NAV_error = NAV_ERROR_NONE;
             if (rcOptions[BOXGPSHOME]) {                                    // RTH has the priotity over everything else
@@ -1191,7 +1220,9 @@ void loop () {
               GPS_reset_nav();
             }
             prv_gps_modes = gps_modes_check;
-          }
+          } // end of "if (prv_gps_modes != gps_modes_check)"
+
+#if !defined(SUPERBEE)
         } else { //numSat>5 
           //numSat dropped below 5 during navigation
           if (f.GPS_mode == GPS_MODE_NAV) {
@@ -1209,8 +1240,11 @@ void loop () {
             prv_gps_modes = 0xff;                                          //invalidates mode check, to allow re evaluate rcOptions when numsats raised again
           }
           nav[0] = 0; nav[1] = 0;
-        }
-      } else { //f.GPS_FIX
+        }   // End of "else numSat>5"
+#endif  // superbee
+
+      } // End of "f.GPS_FIX" check
+      else { //f.GPS_FIX
         // GPS Fix dissapeared, very unlikely that we will be able to regain it, abort mission
         f.GPS_mode = GPS_MODE_NONE;
         NAV_state = NAV_STATE_NONE;
@@ -1370,7 +1404,7 @@ void loop () {
   }
   /* Added by Roice, 20150616 */
   #elif defined(SUPERBEE)
-  if (f.BARO_MODE) {
+  if (f.GPS_FIX) {
     static uint8_t isAltHoldChanged = 0;
     static int16_t AltHoldCorr = 0;
 

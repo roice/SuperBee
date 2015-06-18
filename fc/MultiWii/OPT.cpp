@@ -246,7 +246,9 @@ extern int16_t AltPID;
 extern conf_t   conf;
 extern int16_t  errorAltitudeI;
 extern int16_t accZ;
+extern uint8_t GPS_Frame;
 extern int32_t  __attribute__ ((noinline)) mul(int16_t a, int16_t b);
+extern uint32_t currentTime; 
 
 /* local parameters */
 
@@ -254,7 +256,16 @@ static void enu2llh(const double *e, double *pos);
 
 uint8_t OPT_GPS_NewData(void)
 {
-    if (opt_flag.opt == 0) return 0;
+    if (opt_flag.opt == 0)
+    {
+        if (millis() - pos_enu.time >= 2000) // if not received pos for 2s
+            f.GPS_FIX = 0;  // signal lost for 2 second
+        return 0;
+    }
+    else 
+    {
+        opt_flag.opt = 0;   // clear opt new data flag
+    }
 
     double position_e[3], converted_pos[3];
     // check if position data is valid
@@ -289,7 +300,7 @@ uint8_t OPT_GPS_NewData(void)
     //Blink GPS update
     if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
     GPS_numSat = 8; // >5 indicates good GPS signal
-    opt_flag.opt = 0;   // clear opt new data flag
+    
     opt_flag.gps = 1;   // set gps new data flag
 
     /* Refresh Altitude */
@@ -322,7 +333,6 @@ uint8_t OPT_Alt_Compute(void)
     if (opt_flag.alt == 0) return 0;
 
     /* compute PID */
-    #if !defined(SUPPRESS_BARO_ALTHOLD)
     //P
     int16_t error16 = constrain(AltHold - alt.EstAlt, -300, 300);//300mm
     applyDeadband(error16, 10); //remove small P parametr to reduce noise near zero position, deadband = 10mm
@@ -355,7 +365,6 @@ uint8_t OPT_Alt_Compute(void)
     alt.vario = vel;
     applyDeadband(alt.vario, 5);
     AltPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>4, -150, 150);
-    #endif
 
     opt_flag.alt = 0;   // clear alt new data flag
 

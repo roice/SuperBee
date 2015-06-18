@@ -1689,10 +1689,13 @@
   #define BARO 0
 #endif
 
-#if defined(GPS_SERIAL)  || defined(I2C_GPS)
-  #define GPS 1
-#else
-  #define GPS 0
+/* Modified by Roice, 20150616 */
+#if !defined(SUPERBEE)
+    #if defined(GPS_SERIAL)  || defined(I2C_GPS)
+        #define GPS 1
+    #else
+        #define GPS 0
+    #endif
 #endif
 
 #if defined(USE_MSP_WP)
@@ -2011,8 +2014,11 @@
   #error "for your protection: A32U4_4_HW_PWM_SERVOS was not tested with your coptertype"
 #endif
 
-#if GPS && !defined(NMEA) && !defined(UBLOX) && !defined(MTK_BINARY16) && !defined(MTK_BINARY19) && !defined(INIT_MTK_GPS) && !defined(I2C_GPS)
-  #error "when using GPS you must specify the protocol NMEA, UBLOX..."
+/* Modified by Roice, 20150617 */
+#if !defined(SUPERBEE)
+    #if GPS && !defined(NMEA) && !defined(UBLOX) && !defined(MTK_BINARY16) && !defined(MTK_BINARY19) && !defined(INIT_MTK_GPS) && !defined(I2C_GPS)
+        #error "when using GPS you must specify the protocol NMEA, UBLOX..."
+    #endif
 #endif
 
 #if defined(NUNCHUK) || \

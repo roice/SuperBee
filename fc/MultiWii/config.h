@@ -1086,7 +1086,7 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
       /* Remove handling of other serial commands.
        * This includes navigating via serial the lcd.configuration menu, lcd.telemetry and permanent.log .
        * Navigating via stick inputs on tx is not affected and will work the same.  */
-      //#define SUPPRESS_OTHER_SERIAL_COMMANDS // saves  approx 0 to 100 bytes, depending on features enabled
+      #define SUPPRESS_OTHER_SERIAL_COMMANDS // saves  approx 0 to 100 bytes, depending on features enabled
 
     /**** suppress keeping the defaults for initial setup and reset in the code.
      * This requires a manual initial setup of the PIDs etc. or load and write from defaults.mwi;
