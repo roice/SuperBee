@@ -523,16 +523,14 @@ persistent countprint;
     %transdata=['$OPT,' num2str(tsec) ',' num2str(pos_x_NEE*100) ',' num2str(pos_y_NEE*100) ',' num2str(-pos_z_NEE*100) ',' num2str(roll*18000/pi) ',' num2str(pitch*18000/pi) ',' num2str(yaw*18000/pi) ',,*' ]
    %transdata=['$OPT,' num2str(tsec) ',' num2str(floor(pos_x_NEE*100)) ',' num2str(floor(pos_y_NEE*100)) ',' num2str(-floor(pos_z_NEE*100)) ',' num2str(floor(roll*18000/pi)) ',' num2str(floor(pitch*18000/pi)) ',' num2str(floor(yaw*18000/pi)) ',,*' ] 
    %transdata=['$OPT,' num2str(tsec) ',' num2str(floor(pos_x_NEE*100)) ',' num2str(floor(pos_y_NEE*100)) ',' num2str(-floor(pos_z_NEE*100)) ',' num2str(floor(posTarget(1,1)*100)) ',' num2str(floor(posTarget(2,1)*100)) ',' num2str(floor(posTarget(3,1)*100)) ',' num2str(controlled_by_indicator) ',,*' ];
+  
+% For Debug
   %pos_x_NEE
   %pos_y_NEE
   %pos_z_NEE
-  %pos_ENU_e = int32(pos_y_NEE*100)
-  %pos_ENU_n = int32(pos_x_NEE*100)
-  %pos_ENU_u = int32(pos_z_NEE*(-100))
-  
-  pos_ENU_e = 254
-  pos_ENU_n = 257
-  pos_ENU_u = 65537
+  pos_ENU_e = int32(pos_y_NEE*100)
+  pos_ENU_n = int32(pos_x_NEE*100)
+  pos_ENU_u = int32(pos_z_NEE*(-100))
   
    % preparing SuperBee SBSP message
    % message name: SBSP_FRESH_POS_OPT
@@ -543,24 +541,13 @@ persistent countprint;
    sbsp_cmd = uint8(61);
    sbsp_data = [pos_ENU_e, pos_ENU_n, pos_ENU_u];
    
-   uint8(rem(floor(sbsp_data(1)/256), 256))
-   
-   %size(sbsp_data,2)
-   % generate sequence
+   % generate data sequence
    trans_seq(1) = uint8('$');
    trans_seq(2) = uint8('B');
    trans_seq(3) = uint8('<');
    trans_seq(4) = sbsp_size;
    trans_seq(5) = sbsp_cmd;
-   for index_crc = 1:size(sbsp_data,2)
-        trans_seq((index_crc-1)*4 + 1 + 5) = uint8(mod(sbsp_data(index_crc),256));
-        trans_seq((index_crc-1)*4 + 2 + 5) = uint8(mod(sbsp_data(index_crc)/256,256));
-        trans_seq((index_crc-1)*4 + 3 + 5) = uint8(mod(sbsp_data(index_crc)/256/256,256));
-        trans_seq((index_crc-1)*4 + 4 + 5) = uint8(mod(sbsp_data(index_crc)/256/256/256,256));
-   end
-   
-   % trans_seq(6)
-  % trans_seq(7)
+   trans_seq = [trans_seq, typecast(sbsp_data, 'uint8')];
    
    % calculate CRC
    sbsp_crc = trans_seq(4);
@@ -569,10 +556,8 @@ persistent countprint;
    end
    trans_seq(size(trans_seq,2)+1) = sbsp_crc;
    %-- End of data stream generation
-   
-   % debug
-  
-
+ 
+   % transmit to serial port
    fwrite(sscom, trans_seq);
      
    %  parity=dec2hex(o);
