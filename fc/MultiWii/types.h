@@ -317,7 +317,7 @@ typedef struct {
 
   uint16_t wp_radius;           // in cm
   uint16_t safe_wp_distance;    // in meter
-  uint16_t nav_max_altitude;    // in meter
+  uint16_t nav_max_altitude;    // in milimeter, modified by Roice, 20150616, as the max height of OPT is below 3m, this parameter won't overflow
   uint16_t nav_speed_max;       // in cm/s
   uint16_t nav_speed_min;       // in cm/s
   uint8_t  crosstrack_gain;     // * 100 (0-2.56)

@@ -234,6 +234,7 @@ typedef struct {
 /* Global parameters */
 struct opt_pos_enu_t pos_enu;
 struct opt_flag_t opt_flag; // new data flag
+alt_t    opt_alt;    // altitude provided by OPT
 
 /* extern parameters */
 extern int32_t  GPS_coord[2];
@@ -292,7 +293,6 @@ uint8_t OPT_GPS_NewData(void)
     /* save opt pos to temp array */
     position_e[0] = double(pos_enu.east) / 10000;   // see type def of pos_t
     position_e[1] = double(pos_enu.north) / 10000;
-    position_e[2] = double(pos_enu.up) / 1000;
     /* convert local ENU to LLH
      * This function is linearized and the position to be converted is limited
      * to no more than 100 m to the original pos llh 0.0 N 0.0E */
@@ -312,7 +312,10 @@ uint8_t OPT_GPS_NewData(void)
     opt_flag.gps = 1;   // set gps new data flag
 
     /* Refresh Altitude */
-    alt.EstAlt = int32_t(position_e[2] * 1000);     // 1 mm
+    /* opt_alt.EstAlt will be filted in OPT_Alt_Filter and then
+     * trans to global alt.EstAlt in OPT_Alt_Compute*/
+    opt_alt.EstAlt = pos_enu.up;
+
     opt_flag.alt = 1;    // indicates a new EstAlt data is available
 
     return 1;
@@ -323,6 +326,7 @@ uint8_t OPT_Alt_Filter(void)
     if (opt_flag.alt == 0) return 0;
 
     /* Smooth Altitude data */
+    // opt_alt.EstAlt = opt_alt.EstAlt;
 
     return 1;
 }
@@ -339,6 +343,8 @@ uint8_t OPT_Alt_Compute(void)
     previousT = currentT;
 
     if (opt_flag.alt == 0) return 0;
+
+    alt.EstAlt = opt_alt.EstAlt;
 
     /* compute PID */
     //P
@@ -388,6 +394,6 @@ static void enu2llh(const double *e, double *pos)
     /* convert LON */
     pos[1] = e[1]/110.5741*0.001;
     /* convert HEI */
-    pos[2] = e[2];
+    // ...
 }
 

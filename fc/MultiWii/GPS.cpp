@@ -571,7 +571,8 @@ void force_new_altitude(int32_t _new_alt) {
 
 void set_new_altitude(int32_t _new_alt) {
   //Limit maximum altitude command
-  if(_new_alt > GPS_conf.nav_max_altitude*100) _new_alt = GPS_conf.nav_max_altitude * 100;
+  /* Modified by Roice, 20150616, use milimeter */
+  if(_new_alt > GPS_conf.nav_max_altitude) _new_alt = GPS_conf.nav_max_altitude;
   if(_new_alt == alt.EstAlt){
     force_new_altitude(_new_alt);
     return;

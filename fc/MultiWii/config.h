@@ -741,8 +741,9 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
 // Also aborts mission if the next waypoint distance is more than this number
 #define SAFE_WP_DISTANCE           10      //(**)
 
-//Maximu allowable navigation altitude (in meters) automatic altitude control will not go above this height
-#define MAX_NAV_ALTITUDE           2.5     //(**)
+/* Modified by Roice, 20150616, use milimeter for OPT */
+//Maximu allowable navigation altitude (in milimeters) automatic altitude control will not go above this height
+#define MAX_NAV_ALTITUDE           3000     //(3000mm, 3 meters)
 
 // minimum speed when approach waypoint
 #define NAV_SPEED_MIN              0    // cm/sec //(**)
