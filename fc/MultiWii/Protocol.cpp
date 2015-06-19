@@ -384,11 +384,23 @@ void evaluateSBSPcommand(uint8_t c)
     {
         // position data from OptiTrack Motion Capture
         case SBSP_FRESH_POS_OPT:
-            sbspAck();
+            //sbspAck();
             s_struct_w((uint8_t*)&pos_enu, 3*4);
             pos_enu.time = millis(); // save current time
             // Mark that a new opt data is available
             opt_flag.opt = 1;
+
+            //for debug
+            struct
+            {
+                uint16_t alt_pid;
+                uint32_t alt_hold;
+                uint32_t est_alt;
+            }debug_alt;
+            debug_alt.alt_pid = AltPID;
+            debug_alt.alt_hold = AltHold;
+            debug_alt.est_alt = alt.EstAlt;
+            sbsp_struct((uint8_t*)&debug_alt, 2+4+4);
             
             // for debug
             //extern int32_t  GPS_coord[2];

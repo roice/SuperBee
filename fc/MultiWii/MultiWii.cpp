@@ -1424,7 +1424,7 @@ void loop () {
     }
     #endif
     //IF Throttle not ignored then allow change altitude with the stick....
-    if ( (abs(rcCommand[THROTTLE]-initialThrottleHold)>ALT_HOLD_THROTTLE_NEUTRAL_ZONE) ){// && !f.THROTTLE_IGNORED) {
+    if ( (abs(rcCommand[THROTTLE]-initialThrottleHold)>ALT_HOLD_THROTTLE_NEUTRAL_ZONE) && !f.THROTTLE_IGNORED) {
       // Slowly increase/decrease AltHold proportional to stick movement ( +100 throttle gives ~ +50 cm in 1 second with cycle time about 3-4ms)
       AltHoldCorr+= rcCommand[THROTTLE] - initialThrottleHold;
       if(abs(AltHoldCorr) > 512) {

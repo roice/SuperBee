@@ -348,7 +348,8 @@ uint8_t OPT_Alt_Compute(void)
 
     /* compute PID */
     //P
-    int16_t error16 = constrain(AltHold - alt.EstAlt, -300, 300);//300mm
+    //int16_t error16 = constrain(AltHold - alt.EstAlt, -300, 300);//300mm
+    int16_t error16 = constrain(AltHold - alt.EstAlt, -300, 300) * 10;
     applyDeadband(error16, 10); //remove small P parametr to reduce noise near zero position, deadband = 10mm
     AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>7), -150, +150);
 
@@ -359,21 +360,21 @@ uint8_t OPT_Alt_Compute(void)
  
     applyDeadband(accZ, ACC_Z_DEADBAND);
 
-    static int32_t lastAlt;
+    //static int32_t lastAlt;
     // could only overflow with a difference of 32m, which is highly improbable here
-    int16_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / UPDATE_INTERVAL));
+    //int16_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / UPDATE_INTERVAL));
 
-    lastAlt = alt.EstAlt;
+    //lastAlt = alt.EstAlt;
 
-    AltVel = constrain(AltVel, -300, 300); // constrain baro velocity +/- 30cm/s
-    applyDeadband(AltVel, 10); // to reduce noise near zero
+    //AltVel = constrain(AltVel, -300, 300); // constrain baro velocity +/- 30cm/s
+    //applyDeadband(AltVel, 10); // to reduce noise near zero
 
     // Integrator - velocity, cm/sec
     vel += accZ * ACC_VelScale * dTime;
 
     // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity). 
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e without delay
-    vel = vel * 0.985f + AltVel * 0.015f;
+    //vel = vel * 0.985f + AltVel * 0.015f;
 
     //D
     alt.vario = vel;

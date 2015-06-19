@@ -27,6 +27,9 @@ extern uint8_t  rcOptions[CHECKBOXITEMS];
 extern int32_t  AltHold;
 extern int16_t  sonarAlt;
 extern int16_t  BaroPID;
+#if defined(SUPERBEE)
+extern int16_t  AltPID;
+#endif
 extern int16_t  errorAltitudeI;
 
 extern int16_t  i2c_errors_count;
