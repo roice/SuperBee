@@ -1,0 +1,12 @@
+/*************** MSP messages ******************/
+cmd: MSP_IDENT
+24 4D 3C 00 64 64
+cmd: MSP_RAW_GPS
+24 4D 3C 00 6A 6A
+cmd: MSP_BOX
+24 4D 3C 00 71 71
+
+/**************** SBSP messages *********************/
+cmd: SBSP_FRESH_POS_OPT
+test data: 1113.2mm, 1105.7mm, 1000.0mm
+24 42 3C 0C 3D 7C 2B 00 00 31 2B 00 00 10 27 00 00 4B
