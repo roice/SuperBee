@@ -60,7 +60,7 @@
     //#define MINTHROTTLE 1120 // for Super Simple ESCs 10A
     //#define MINTHROTTLE 1064 // special ESC (simonk)
     //#define MINTHROTTLE 1050 // for brushed ESCs like ladybird
-    #define MINTHROTTLE 1000 // (*) (**)
+    #define MINTHROTTLE 1100 // (*) (**)
 
   /****************************    Motor maxthrottle    *******************************/
     /* this is the maximum value for the ESCs at full power, this value can be increased up to 2000 */
@@ -939,7 +939,7 @@ Also note, that maqgnetic declination changes with time, so recheck your value e
     /* defines the neutral zone of throttle stick during altitude hold, default setting is
        +/-50 uncommend and change the value below if you want to change it. */
     #define ALT_HOLD_THROTTLE_NEUTRAL_ZONE    50
-    //#define ALT_HOLD_THROTTLE_MIDPOINT        1500  // in us    - if uncommented, this value is used in ALT_HOLD for throttle stick middle point instead of initialThrottleHold parameter.
+    #define ALT_HOLD_THROTTLE_MIDPOINT        1500  // in us    - if uncommented, this value is used in ALT_HOLD for throttle stick middle point instead of initialThrottleHold parameter.
 
 
     /* uncomment to disable the altitude hold feature.

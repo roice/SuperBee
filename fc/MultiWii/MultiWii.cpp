@@ -166,12 +166,13 @@ uint16_t calibratingG;
 int16_t  magHold,headFreeModeHold; // [-180;+180]
 uint8_t  vbatMin = VBATNOMINAL;  // lowest battery voltage in 0.1V steps
 uint8_t  rcOptions[CHECKBOXITEMS];
-int32_t  AltHold; // in cm
+int32_t  AltHold; // in mm
 int16_t  sonarAlt;
 int16_t  BaroPID = 0;
 /* Modified by Roice, 20150616 */
 #if defined(SUPERBEE)
 int16_t  AltPID = 0;
+int8_t  OPTregainFlag = 1;  // indicate the GPS signal regained (if == 1), for AltHold initiating
 extern struct opt_pos_enu_t pos_enu;
 extern struct opt_flag_t opt_flag; // new data flag
 #endif
@@ -1124,15 +1125,20 @@ void loop () {
       #endif
 /* Modified by Roice, 20150617 */
     #elif defined(SUPERBEE)
-        if (rcOptions[BOXGPSHOME] || rcOptions[BOXGPSNAV] || rcOptions[BOXGPSHOLD] || rcOptions[BOXLAND]) {
-            AltHold = alt.EstAlt;
-            #if defined(ALT_HOLD_THROTTLE_MIDPOINT)
-              initialThrottleHold = ALT_HOLD_THROTTLE_MIDPOINT;
-            #else
-              initialThrottleHold = rcCommand[THROTTLE];
-            #endif
-            errorAltitudeI = 0;
-            AltPID=0;
+        if (f.GPS_FIX) {
+            if (OPTregainFlag)  // if regained OPT signal, then should init Alt
+            {
+                AltHold = alt.EstAlt;
+                #if defined(ALT_HOLD_THROTTLE_MIDPOINT)
+                    initialThrottleHold = ALT_HOLD_THROTTLE_MIDPOINT;
+                #else
+                    initialThrottleHold = rcCommand[THROTTLE];
+                #endif
+                errorAltitudeI = 0;
+                AltPID=0;
+
+                OPTregainFlag = 0;  // clear flag
+            }
           }
     #endif  // BARO
 

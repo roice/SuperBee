@@ -248,7 +248,8 @@ extern int16_t  errorAltitudeI;
 extern int16_t accZ;
 extern uint8_t GPS_Frame;
 extern int32_t  __attribute__ ((noinline)) mul(int16_t a, int16_t b);
-extern uint32_t currentTime; 
+extern uint32_t currentTime;
+extern int8_t  OPTregainFlag;
 
 /* local parameters */
 
@@ -265,7 +266,14 @@ uint8_t OPT_GPS_NewData(void)
     else 
     {
         opt_flag.opt = 0;   // clear opt new data flag
+
+        /* check if this is the first frame that OPT signal regained */
+        if (f.GPS_FIX == 0) // last time the OPT signal is in lost state
+            OPTregainFlag = 1;  // then should notify the main loop to init Alt
     }
+
+    // debug
+    //f.GPS_FIX = 1;
 
     double position_e[3], converted_pos[3];
     // check if position data is valid
@@ -284,7 +292,7 @@ uint8_t OPT_GPS_NewData(void)
     /* save opt pos to temp array */
     position_e[0] = double(pos_enu.east) / 10000;   // see type def of pos_t
     position_e[1] = double(pos_enu.north) / 10000;
-    position_e[2] = double(pos_enu.up) / 10000;
+    position_e[2] = double(pos_enu.up) / 1000;
     /* convert local ENU to LLH
      * This function is linearized and the position to be converted is limited
      * to no more than 100 m to the original pos llh 0.0 N 0.0E */
@@ -296,7 +304,7 @@ uint8_t OPT_GPS_NewData(void)
     GPS_coord[1] = int32_t(converted_pos[1] * 100000000);
     f.GPS_FIX = 1;  // have a good GPS 3D FIX
     //Mark that a new GPS frame is available for GPS_Compute()
-    //GPS_Frame = 1;
+    GPS_Frame = 1;
     //Blink GPS update
     if (GPS_update == 1) GPS_update = 0; else GPS_update = 1;
     GPS_numSat = 8; // >5 indicates good GPS signal
@@ -304,7 +312,7 @@ uint8_t OPT_GPS_NewData(void)
     opt_flag.gps = 1;   // set gps new data flag
 
     /* Refresh Altitude */
-    alt.EstAlt = int32_t(converted_pos[2] * 1000);     // 1 mm
+    alt.EstAlt = int32_t(position_e[2] * 1000);     // 1 mm
     opt_flag.alt = 1;    // indicates a new EstAlt data is available
 
     return 1;
