@@ -172,7 +172,7 @@ int16_t  BaroPID = 0;
 /* Modified by Roice, 20150616 */
 #if defined(SUPERBEE)
 int16_t  AltPID = 0;
-int8_t  OPTregainFlag = 1;  // indicate the GPS signal regained (if == 1), for AltHold initiating
+int8_t  NeedInitAltFlag = 1;  // indicate the GPS signal regained (if == 1) or just Armed, for AltHold initiating
 extern struct opt_pos_enu_t pos_enu;
 extern struct opt_flag_t opt_flag; // new data flag
 #endif
@@ -756,6 +756,7 @@ void setup() {
     plog.armed_time = 0;   // lifetime in seconds
     //plog.running = 0;       // toggle on arm & disarm to monitor for clean shutdown vs. powercut
   #endif
+
 /* Added by Roice, 20150617 */
   #if defined(SUPERBEE)
     /* init opt related struct & value */
@@ -763,12 +764,17 @@ void setup() {
     opt_flag.opt = 0;
     opt_flag.gps = 0;
     opt_flag.alt = 0;
+    /* set conf.activate to enable AUX1 control modes */
+    conf.activate[BOXANGLE] = 0x0005;   // AUX1 low/high enable
+    conf.activate[BOXMAG] = 0x0005; // AUX1 low/high enable
+    conf.activate[BOXGPSHOLD] = 0x0004; // AUX1 high enable
   #endif
 /* End of modification */
+
   #ifdef DEBUGMSG
     debugmsg_append_str("initialization completed\n");
   #endif
-}
+}// End of setup()
 
 void go_arm() {
   if(calibratingG == 0
@@ -825,6 +831,10 @@ void go_arm() {
 void go_disarm() {
   if (f.ARMED) {
     f.ARMED = 0;
+    
+    /* Added by Roice, 20150625 */
+    NeedInitAltFlag = 1; // next time armed, will init althold
+    
     #ifdef LOG_PERMANENT
       plog.disarm++;        // #disarm events
       plog.armed_time = armedTime ;   // lifetime in seconds
@@ -1124,20 +1134,20 @@ void loop () {
         }
       #endif
 /* Modified by Roice, 20150617 */
+        /*
+         * When the quad gets GPS_FIX and ARMED, move throttle stick to middle and it will start off to 50mm above init alt
+         * The OPTregainFlag
+         */
     #elif defined(SUPERBEE)
-        if (f.GPS_FIX) {
-            if (OPTregainFlag)  // if regained OPT signal, then should init Alt
+        if (f.GPS_FIX && f.ARMED && (abs(rcCommand[THROTTLE]-initialThrottleHold)<ALT_HOLD_THROTTLE_NEUTRAL_ZONE)) {
+            if (NeedInitAltFlag)  // if just ARMED or regain OPT signal, should init Alt
             {
-                AltHold = alt.EstAlt;
-                #if defined(ALT_HOLD_THROTTLE_MIDPOINT)
-                    initialThrottleHold = ALT_HOLD_THROTTLE_MIDPOINT;
-                #else
-                    initialThrottleHold = rcCommand[THROTTLE];
-                #endif
+                AltHold = alt.EstAlt + 50;  // set target alt above 50mm of disarmed alt  to force quad start off
+                initialThrottleHold = ALT_HOLD_THROTTLE_MIDPOINT;
                 errorAltitudeI = 0;
                 AltPID=0;
 
-                OPTregainFlag = 0;  // clear flag
+                NeedInitAltFlag = 0;  // clear flag
             }
           }
     #endif  // BARO
@@ -1410,7 +1420,7 @@ void loop () {
   }
   /* Added by Roice, 20150616 */
   #elif defined(SUPERBEE)
-  if (f.GPS_FIX) {
+  if (f.GPS_FIX && f.ARMED && !NeedInitAltFlag) {
     static uint8_t isAltHoldChanged = 0;
     static int16_t AltHoldCorr = 0;
 
@@ -1425,7 +1435,7 @@ void loop () {
     #endif
     //IF Throttle not ignored then allow change altitude with the stick....
     if ( (abs(rcCommand[THROTTLE]-initialThrottleHold)>ALT_HOLD_THROTTLE_NEUTRAL_ZONE) && !f.THROTTLE_IGNORED) {
-      // Slowly increase/decrease AltHold proportional to stick movement ( +100 throttle gives ~ +50 cm in 1 second with cycle time about 3-4ms)
+      // Slowly increase/decrease AltHold proportional to stick movement ( +100 throttle gives ~ +50 mm in 1 second with cycle time about 3-4ms)
       AltHoldCorr+= rcCommand[THROTTLE] - initialThrottleHold;
       if(abs(AltHoldCorr) > 512) {
         AltHold += AltHoldCorr/512;
@@ -1436,7 +1446,7 @@ void loop () {
       AltHold = alt.EstAlt;
       isAltHoldChanged = 0;
     }
-    rcCommand[THROTTLE] = initialThrottleHold + AltPID;
+    rcCommand[THROTTLE] = constrain(initialThrottleHold + AltPID, MINTHROTTLE, MAXTHROTTLE);
   }
   #endif  //SuperBee
   /* End of modification */
