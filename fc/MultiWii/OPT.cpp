@@ -348,16 +348,17 @@ uint8_t OPT_Alt_Compute(void)
 
     /* compute PID */
     //P
-    int16_t error16 = constrain(AltHold - alt.EstAlt, -300, 300);
-    applyDeadband(error16, 10); //remove small P parametr to reduce noise near zero position, deadband = 10mm
-    AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>7), -150, +150);
+    int32_t error16 = constrain(AltHold - alt.EstAlt, -500, 500);
+    applyDeadband(error16, 3); //remove small P parametr to reduce noise near zero position, deadband = 10mm
+    //AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>7), -150, +150);
+    AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>9), -500, +500);
 
     //I
     /* Modified by Roice, 20150625 */
-    errorAltitudeI += conf.pid[PIDALT].I8 * error16 >>4;
-    errorAltitudeI = constrain(errorAltitudeI,-500,+500);// I in range +/- 500
-    //AltPID += errorAltitudeI>>9; //I in range +/-60 
-    AltPID += errorAltitudeI;   // +/-320 for 50mm error lasting 1s
+    errorAltitudeI += conf.pid[PIDALT].I8 * error16 >>8;
+    errorAltitudeI = constrain(errorAltitudeI,-30000,+30000);// I in range +/- 500
+    AltPID += errorAltitudeI>>11; //I in range +/-60 
+    //AltPID += errorAltitudeI;   // +/-320 for 50mm error lasting 1s
     // End of Modification
     // End of I
 
@@ -365,7 +366,7 @@ uint8_t OPT_Alt_Compute(void)
 
     static int32_t lastAlt;
     // could only overflow with a difference of 32m, which is highly improbable here
-    int16_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / UPDATE_INTERVAL));
+    int32_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / UPDATE_INTERVAL));
 
     lastAlt = alt.EstAlt;
 
@@ -382,7 +383,7 @@ uint8_t OPT_Alt_Compute(void)
     //D
     alt.vario = vel;
     applyDeadband(alt.vario, 5);
-    AltPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>4, -150, 150);
+    AltPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>6, -150, 150);
 
     opt_flag.alt = 0;   // clear alt new data flag
 

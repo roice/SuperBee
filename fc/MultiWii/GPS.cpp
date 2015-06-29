@@ -193,6 +193,10 @@ uint8_t GPS_Compute(void) {
   //check that we have a valid frame, if not then return immediatly
   if (GPS_Frame == 0) return 0; else GPS_Frame = 0;
 
+
+  //debug
+
+
   //check home position and set it if it was not set
   if (f.GPS_FIX && GPS_numSat >= 5) {
     #if !defined(DONT_RESET_HOME_AT_ARM)

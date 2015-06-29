@@ -768,6 +768,10 @@ void setup() {
     conf.activate[BOXANGLE] = 0x0005;   // AUX1 low/high enable
     conf.activate[BOXMAG] = 0x0005; // AUX1 low/high enable
     conf.activate[BOXGPSHOLD] = 0x0004; // AUX1 high enable
+    /* set Alt hold PID */
+    conf.pid[PIDALT].P8 = 56;
+    conf.pid[PIDALT].I8 = 22;
+    conf.pid[PIDALT].D8 = 21;
   #endif
 /* End of modification */
 
@@ -1139,17 +1143,18 @@ void loop () {
          * The OPTregainFlag
          */
     #elif defined(SUPERBEE)
-        if (f.GPS_FIX && f.ARMED && (abs(rcCommand[THROTTLE]-initialThrottleHold)<ALT_HOLD_THROTTLE_NEUTRAL_ZONE)) {
+        if(rcOptions[BOXGPSHOLD]) {
+        //if (f.GPS_FIX && f.ARMED && (abs(rcCommand[THROTTLE]-ALT_HOLD_THROTTLE_MIDPOINT)<ALT_HOLD_THROTTLE_NEUTRAL_ZONE)) {
             if (NeedInitAltFlag)  // if just ARMED or regain OPT signal, should init Alt
             {
-                AltHold = alt.EstAlt + 50;  // set target alt above 50mm of disarmed alt  to force quad start off
-                initialThrottleHold = ALT_HOLD_THROTTLE_MIDPOINT;
+                AltHold = alt.EstAlt;  // set target alt above 50mm of disarmed alt  to force quad start off
+                initialThrottleHold = rcCommand[THROTTLE];
                 errorAltitudeI = 0;
                 AltPID=0;
 
                 NeedInitAltFlag = 0;  // clear flag
             }
-          }
+          } 
     #endif  // BARO
 
     if (rcOptions[BOXMAG]) {
@@ -1312,7 +1317,7 @@ void loop () {
       case 3:
         taskOrder++;
         #if GPS
-          if (GPS_Compute() != 0) break;  // performs computation on new frame only if present
+          //if (GPS_Compute() != 0) break;  // performs computation on new frame only if present
           #if defined(I2C_GPS)
             if (GPS_NewData() != 0) break;  // 160 us with no new data / much more with new data
           /* Modified by Roice, 20150614 */
@@ -1322,6 +1327,9 @@ void loop () {
         #endif
       case 4:
         taskOrder=0;
+        /* Roice */
+        //if (GPS_Compute() != 0) break;  // performs computation on new frame only if present
+
         #if SONAR
           Sonar_update(); //debug[2] = sonarAlt;
         #endif

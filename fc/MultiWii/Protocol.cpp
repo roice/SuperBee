@@ -106,6 +106,7 @@ static uint8_t cmdMSP[UART_NUMBER];
 #if (defined(SUPERBEE) && defined(OPT))
 extern struct opt_pos_enu_t pos_enu;
 extern struct opt_flag_t    opt_flag;
+extern int8_t  NeedInitAltFlag; 
 #endif
 /* End of modification */
 
@@ -393,14 +394,18 @@ void evaluateSBSPcommand(uint8_t c)
             //for debug
             struct
             {
+                uint16_t rc_throttle;
                 uint16_t alt_pid;
+                uint32_t est_alt; 
                 uint32_t alt_hold;
-                uint32_t est_alt;
+                uint8_t NeedInitAlt;
             }debug_alt;
             debug_alt.alt_pid = AltPID;
             debug_alt.alt_hold = AltHold;
             debug_alt.est_alt = alt.EstAlt;
-            sbsp_struct((uint8_t*)&debug_alt, 2+4+4);
+            debug_alt.rc_throttle = rcCommand[THROTTLE];
+            debug_alt.NeedInitAlt = NeedInitAltFlag;
+            sbsp_struct((uint8_t*)&debug_alt, 2+2+4+4+1);
             
             // for debug
             //extern int32_t  GPS_coord[2];
