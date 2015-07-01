@@ -11,7 +11,7 @@
 
 /* copied from Sensors.h */
 #define ACC_1G 512  // MPU6050
-#define ACC_VelScale (9.80665f / 10000.0f / ACC_1G)
+#define ACC_VelScale (9.80106f / 10000.0f / ACC_1G) // Tianjin
 
 /* copied from IMU */
 #define UPDATE_INTERVAL 25000    // 40hz update rate (20hz LPF on acc)
@@ -94,7 +94,7 @@ typedef struct {
 } flags_struct_t;
 typedef struct {
   int32_t  EstAlt;
-  int16_t  vario;
+  int32_t  vario;
 } alt_t;
 enum box {
   BOXARM,
@@ -245,7 +245,7 @@ extern alt_t alt;
 extern int32_t AltHold; // actually in mm
 extern int16_t AltPID;
 extern conf_t   conf;
-extern int16_t  errorAltitudeI;
+extern int32_t  errorAltitudeI;
 extern int16_t accZ;
 extern uint8_t GPS_Frame;
 extern int32_t  __attribute__ ((noinline)) mul(int16_t a, int16_t b);
@@ -333,59 +333,58 @@ uint8_t OPT_Alt_Filter(void)
 
 uint8_t OPT_Alt_Compute(void)
 {
-    static float vel = 0.0f;
+    static double vel = 0.0f;
     static uint16_t previousT;
     uint16_t currentT = micros();
     uint16_t    dTime;
 
+    // compute period in us
     dTime = currentT - previousT;
     if (dTime < UPDATE_INTERVAL) return 0;
     previousT = currentT;
 
+    // compute accelaration in Z dir
+    applyDeadband(accZ, ACC_Z_DEADBAND);
+    // Integrator - velocity, mm/sec
+    vel += accZ * ACC_VelScale * dTime * 10.0f;
+
+    // check if have valid alt position
     if (opt_flag.alt == 0) return 0;
+    else opt_flag.alt = 0;   // clear alt new data flag
 
     alt.EstAlt = opt_alt.EstAlt;
-
-    /* compute PID */
-    //P
-    int32_t error16 = constrain(AltHold - alt.EstAlt, -500, 500);
-    applyDeadband(error16, 3); //remove small P parametr to reduce noise near zero position, deadband = 10mm
-    //AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>7), -150, +150);
-    AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>9), -500, +500);
-
-    //I
-    /* Modified by Roice, 20150625 */
-    errorAltitudeI += conf.pid[PIDALT].I8 * error16 >>8;
-    errorAltitudeI = constrain(errorAltitudeI,-30000,+30000);// I in range +/- 500
-    AltPID += errorAltitudeI>>11; //I in range +/-60 
-    //AltPID += errorAltitudeI;   // +/-320 for 50mm error lasting 1s
-    // End of Modification
-    // End of I
-
-    applyDeadband(accZ, ACC_Z_DEADBAND);
-
     static int32_t lastAlt;
-    // could only overflow with a difference of 32m, which is highly improbable here
-    int32_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / UPDATE_INTERVAL));
-
+    // could only overflow with a difference of 2^31 mm/s, which is highly improbable here
+    int32_t AltVel = mul((alt.EstAlt - lastAlt) , (1000000 / dTime));   // alt velocity, mm/s
     lastAlt = alt.EstAlt;
-
-    AltVel = constrain(AltVel, -300, 300); // constrain baro velocity +/- 30cm/s
+    AltVel = constrain(AltVel, -3000, 3000); // constrain alt velocity +/- 3000mm/s
     applyDeadband(AltVel, 10); // to reduce noise near zero
-
-    // Integrator - velocity, cm/sec
-    vel += accZ * ACC_VelScale * dTime;
-
+ 
     // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity). 
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e without delay
     vel = vel * 0.985f + AltVel * 0.015f;
 
+    // check if already alt init, if not, skip PID calc
+    if (NeedInitAltFlag != 0) return 0; 
+
+    /* compute PID */
+    //P
+    int32_t error16 = constrain(AltHold - alt.EstAlt, -2000, 2000); // +/- 2000mm , indoor
+    applyDeadband(error16, 10); //remove small P parametr to reduce noise near zero position, deadband = 10mm
+    AltPID = constrain((conf.pid[PIDALT].P8 * error16 >>(7+3)), -500, +500);    // error16 is in mm
+
+    //I
+    /* Modified by Roice, 20150625 */
+    errorAltitudeI += conf.pid[PIDALT].I8 * error16 >>(6+3);    // error16 is in mm
+    errorAltitudeI = constrain(errorAltitudeI,-30000,+30000);
+    AltPID += errorAltitudeI>>9; //I in range +/-60
+    // End of Modification
+    // End of I  
+
     //D
     alt.vario = vel;
     applyDeadband(alt.vario, 5);
-    AltPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>6, -150, 150);
-
-    opt_flag.alt = 0;   // clear alt new data flag
+    AltPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>(4+3), -150, 150); 
 
     return 1;
 }

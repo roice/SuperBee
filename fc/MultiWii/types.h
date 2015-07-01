@@ -104,8 +104,8 @@ typedef struct {
 } analog_t;
 
 typedef struct {
-  int32_t  EstAlt;             // in cm
-  int16_t  vario;              // variometer in cm/s
+  int32_t  EstAlt;             // in mm
+  int32_t  vario;              // variometer in mm/s
 } alt_t;
 
 typedef struct {

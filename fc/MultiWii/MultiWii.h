@@ -30,7 +30,7 @@ extern int16_t  BaroPID;
 #if defined(SUPERBEE)
 extern int16_t  AltPID;
 #endif
-extern int16_t  errorAltitudeI;
+extern int32_t  errorAltitudeI;
 
 extern int16_t  i2c_errors_count;
 extern uint8_t alarmArray[ALRM_FAC_SIZE];

@@ -376,6 +376,23 @@ void serialCom() {
   } // for
 }
 
+/* Added by Roice, 20150629 */
+#if defined(SUPERBEE)
+static void simplot_send_int(uint8_t *cb, uint8_t siz)
+{
+}
+static void simplot_send(uint8_t *cb)
+{
+  uint16_t head = 0xCDAB; // SimPlot head
+  uint16_t size = 16;     // four int32
+  s_struct_partial((uint8_t*)&head, sizeof(head));
+  s_struct_partial((uint8_t*)&size, sizeof(size));
+  s_struct_partial(cb,4*sizeof(int32_t)); // four int32
+  UartSendData(CURRENTPORT);
+}
+#endif
+/* End of modification */
+
 /* Added by Roice, 20150615 */
 #if defined(SUPERBEE)
 /* SBSP decoder */
@@ -392,20 +409,20 @@ void evaluateSBSPcommand(uint8_t c)
             opt_flag.opt = 1;
 
             //for debug
+            //if using simplot, size must be 4*4 bytes
             struct
             {
-                uint16_t rc_throttle;
-                uint16_t alt_pid;
-                uint32_t est_alt; 
-                uint32_t alt_hold;
-                uint8_t NeedInitAlt;
+                int32_t alt_hold;
+                uint32_t NeedInitAlt;
+                int32_t est_alt;
+                int32_t alt_pid; 
             }debug_alt;
             debug_alt.alt_pid = AltPID;
             debug_alt.alt_hold = AltHold;
             debug_alt.est_alt = alt.EstAlt;
-            debug_alt.rc_throttle = rcCommand[THROTTLE];
             debug_alt.NeedInitAlt = NeedInitAltFlag;
-            sbsp_struct((uint8_t*)&debug_alt, 2+2+4+4+1);
+            //sbsp_struct((uint8_t*)&debug_alt, 2+2+4+4+1);
+            simplot_send((uint8_t*)&debug_alt);
             
             // for debug
             //extern int32_t  GPS_coord[2];

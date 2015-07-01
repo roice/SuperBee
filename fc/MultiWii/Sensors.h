@@ -48,7 +48,7 @@ void i2c_read_reg_to_buf(uint8_t add, uint8_t reg, uint8_t *buf, uint8_t size);
   #define ACC_1G 256
 #endif
 #define ACCZ_25deg   (int16_t)(ACC_1G * 0.90631) // 0.90631 = cos(25deg) (cos(theta) of accZ comparison)
-#define ACC_VelScale (9.80665f / 10000.0f / ACC_1G)
+#define ACC_VelScale (9.80106f / 10000.0f / ACC_1G) // Tianjin
 
 // GYRO SCALE: we ignore the last 2 bits and convert it for rad/s
 #if defined(ITG3050)

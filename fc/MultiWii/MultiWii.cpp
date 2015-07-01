@@ -176,7 +176,7 @@ int8_t  NeedInitAltFlag = 1;  // indicate the GPS signal regained (if == 1) or j
 extern struct opt_pos_enu_t pos_enu;
 extern struct opt_flag_t opt_flag; // new data flag
 #endif
-int16_t  errorAltitudeI = 0;
+int32_t  errorAltitudeI = 0;
 
 // **************
 // gyro+acc IMU
@@ -769,9 +769,10 @@ void setup() {
     conf.activate[BOXMAG] = 0x0005; // AUX1 low/high enable
     conf.activate[BOXGPSHOLD] = 0x0004; // AUX1 high enable
     /* set Alt hold PID */
-    conf.pid[PIDALT].P8 = 56;
-    conf.pid[PIDALT].I8 = 22;
-    conf.pid[PIDALT].D8 = 21;
+    float altpid_multiple = 1.0f;
+    conf.pid[PIDALT].P8 = uint8_t(altpid_multiple*64.0f/1.25f);
+    conf.pid[PIDALT].I8 = uint8_t(altpid_multiple*25.0f/1.25f);
+    conf.pid[PIDALT].D8 = uint8_t(altpid_multiple*24.0f/1.25f);
   #endif
 /* End of modification */
 
