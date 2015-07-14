@@ -445,7 +445,10 @@ typedef enum {
 #ifdef SONAR
     UPDATE_SONAR_TASK,
 #endif
-#if defined(BARO) || defined(SONAR)
+#if defined(MOCAP)
+    UPDATE_MOCAP_TASK,
+#endif
+#if defined(BARO) || defined(SONAR) || defined(MOCAP)
     CALCULATE_ALTITUDE_TASK,
 #endif
     UPDATE_DISPLAY_TASK
@@ -467,7 +470,7 @@ void executePeriodicTasks(void)
         break;
 #endif
 
-#ifdef BARO
+#if defined(BARO) && !defined(MOCAP)
     case UPDATE_BARO_TASK:
         if (sensors(SENSOR_BARO)) {
             baroUpdate(currentTime);
@@ -475,17 +478,20 @@ void executePeriodicTasks(void)
         break;
 #endif
 
-#if defined(BARO) || defined(SONAR)
+#if defined(BARO) || defined(SONAR) || defined(MOCAP)
     case CALCULATE_ALTITUDE_TASK:
 
-#if defined(BARO) && !defined(SONAR)
+#if defined(BARO) && !defined(SONAR) && !defined(MOCAP)
         if (sensors(SENSOR_BARO) && isBaroReady()) {
 #endif
-#if defined(BARO) && defined(SONAR)
+#if defined(BARO) && defined(SONAR) && !defined(MOCAP)
         if ((sensors(SENSOR_BARO) && isBaroReady()) || sensors(SENSOR_SONAR)) {
 #endif
-#if !defined(BARO) && defined(SONAR)
+#if !defined(BARO) && defined(SONAR) && !defined(MOCAP)
         if (sensors(SENSOR_SONAR)) {
+#endif
+#if defined(MOCAP)
+        if (sensors(SENSOR_MOCAP)) {// if Motion Capture is available
 #endif
             calculateEstimatedAltitude(currentTime);
         }
@@ -495,6 +501,13 @@ void executePeriodicTasks(void)
     case UPDATE_SONAR_TASK:
         if (sensors(SENSOR_SONAR)) {
             sonarUpdate();
+        }
+        break;
+#endif
+#ifdef MOCAP
+    case UPDATE_MOCAP_TASK:
+        if (sensors(SENSOR_MOCAP)) {
+            mocapUpdatePos();
         }
         break;
 #endif
@@ -689,7 +702,7 @@ void processRx(void)
 void loop(void)
 {
     static uint32_t loopTime;
-#if defined(BARO) || defined(SONAR)
+#if defined(BARO) || defined(SONAR) || defined(MOCAP)
     static bool haveProcessedAnnexCodeOnce = false;
 #endif
 
@@ -712,6 +725,15 @@ void loop(void)
         if (haveProcessedAnnexCodeOnce) {
             if (sensors(SENSOR_SONAR)) {
                 updateSonarAltHoldState();
+            }
+        }
+#endif
+
+#ifdef MOCAP
+        // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid rcCommand data.
+        if (haveProcessedAnnexCodeOnce) {
+            if (sensors(SENSOR_MOCAP)) {
+                updateMocapAltHoldState();
             }
         }
 #endif
@@ -752,7 +774,7 @@ void loop(void)
         }
 
         annexCode();
-#if defined(BARO) || defined(SONAR)
+#if defined(BARO) || defined(SONAR) || defined(MOCAP)
         haveProcessedAnnexCodeOnce = true;
 #endif
 
@@ -766,9 +788,9 @@ void loop(void)
         }
 #endif
 
-#if defined(BARO) || defined(SONAR)
-        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR)) {
-            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE)) {
+#if defined(BARO) || defined(SONAR) || defined(MOCAP)
+        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_MOCAP)) {
+            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(MOCAP_MODE)) {
                 applyAltHold(&masterConfig.airplaneConfig);
             }
         }

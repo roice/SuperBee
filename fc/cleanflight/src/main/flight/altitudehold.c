@@ -35,11 +35,13 @@
 #include "sensors/acceleration.h"
 #include "sensors/barometer.h"
 #include "sensors/sonar.h"
+#include "sensors/mocap.h"
 
 #include "rx/rx.h"
 
 #include "io/rc_controls.h"
 #include "io/escservo.h"
+#include "io/beeper.h"
 
 #include "flight/mixer.h"
 #include "flight/pid.h"
@@ -73,7 +75,7 @@ void configureAltitudeHold(
     escAndServoConfig = initialEscAndServoConfig;
 }
 
-#if defined(BARO) || defined(SONAR)
+#if defined(BARO) || defined(SONAR) || defined(MOCAP)
 
 static int16_t initialThrottleHold;
 static int32_t EstAlt;                // in cm
@@ -168,6 +170,25 @@ void updateSonarAltHoldState(void)
     }
 }
 
+void updateMocapAltHoldState(void)
+{
+    // Mocap alt hold activate
+    if (!IS_RC_MODE_ACTIVE(BOXMOCAP)) {
+        DISABLE_FLIGHT_MODE(MOCAP_MODE);
+        return;
+    }
+
+    if (!FLIGHT_MODE(MOCAP_MODE)) {
+        ENABLE_FLIGHT_MODE(MOCAP_MODE);
+        AltHold = EstAlt;
+        initialThrottleHold = rcData[THROTTLE];
+        errorVelocityI = 0;
+        altHoldThrottleAdjustment = 0;
+        // beep
+        beeper(BEEPER_ARMING_GPS_FIX);
+    }
+}
+
 bool isThrustFacingDownwards(rollAndPitchInclination_t *inclination)
 {
     return ABS(inclination->values.rollDeciDegrees) < DEGREES_80_IN_DECIDEGREES && ABS(inclination->values.pitchDeciDegrees) < DEGREES_80_IN_DECIDEGREES;
@@ -227,23 +248,32 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     float dt;
     float vel_acc;
     int32_t vel_tmp;
-    float accZ_tmp;
-    int32_t sonarAlt = -1;
+    float accZ_tmp; 
     static float accZ_old = 0.0f;
     static float vel = 0.0f;
     static float accAlt = 0.0f;
     static int32_t lastBaroAlt;
 
+#if defined(SONAR) || !defined(MOCAP)
+    int32_t sonarAlt = -1;
     static int32_t baroAlt_offset = 0;
     float sonarTransition;
+#endif
 
 #ifdef SONAR
     int16_t tiltAngle;
 #endif
 
     dTime = currentTime - previousTime;
+#ifdef MOCAP
+    if (isMocapAltReady())  // if alt data calc from Motion Capture is ready
+        clearMocapAltReadyFlag();   // clear mocapAlt
+    else
+        return;
+#else
     if (dTime < BARO_UPDATE_FREQUENCY_40HZ)
         return;
+#endif
 
     previousTime = currentTime;
 
@@ -265,6 +295,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     sonarAlt = sonarCalculateAltitude(sonarAlt, tiltAngle);
 #endif
 
+#if !defined(MOCAP)
     if (sonarAlt > 0 && sonarAlt < 200) {
         baroAlt_offset = BaroAlt - sonarAlt;
         BaroAlt = sonarAlt;
@@ -275,6 +306,12 @@ void calculateEstimatedAltitude(uint32_t currentTime)
             BaroAlt = sonarAlt * sonarTransition + BaroAlt * (1.0f - sonarTransition);
         }
     }
+#endif
+
+// Get altitude from Motion Capture
+#ifdef MOCAP
+    BaroAlt = mocapReadAltitude();
+#endif
 
     dt = accTimeSum * 1e-6f; // delta acc reading time in seconds
 
@@ -285,7 +322,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
         accZ_tmp = 0;
     }
     vel_acc = accZ_tmp * accVelScale * (float)accTimeSum;
-
+   
     // Integrator - Altitude in cm
     accAlt += (vel_acc * 0.5f) * dt + vel * dt;                                                                 // integrate velocity to get distance (x= a/2 * t^2)
     accAlt = accAlt * barometerConfig->baro_cf_alt + (float)BaroAlt * (1.0f - barometerConfig->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
@@ -305,12 +342,16 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     }
 #endif
 
+#ifdef MOCAP
+    EstAlt = BaroAlt;
+#else
     if (sonarAlt > 0 && sonarAlt < 200) {
         // the sonar has the best range
         EstAlt = BaroAlt;
     } else {
         EstAlt = accAlt;
     }
+#endif
 
     baroVel = (BaroAlt - lastBaroAlt) * 1000000.0f / dTime;
     lastBaroAlt = BaroAlt;

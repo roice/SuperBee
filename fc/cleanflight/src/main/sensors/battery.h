@@ -19,7 +19,7 @@
 
 #include "rx/rx.h"
 
-#define VBAT_SCALE_DEFAULT 110
+#define VBAT_SCALE_DEFAULT 112
 #define VBAT_SCALE_MIN 0
 #define VBAT_SCALE_MAX 255
 

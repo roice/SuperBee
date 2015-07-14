@@ -15,19 +15,14 @@
  * along with Cleanflight.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "io/escservo.h"
-#include "io/rc_controls.h"
-#include "flight/pid.h"
+typedef enum nazeHardwareRevision_t {
+    UNKNOWN = 0,
+    NAZE32, // Naze32 and compatible with 8MHz HSE
+    NAZE32_REV5, // Naze32 and compatible with 12MHz HSE
+    NAZE32_SP // Naze32 w/Sensor Platforms
+} nazeHardwareRevision_e;
 
-#include "sensors/barometer.h"
+extern uint8_t hardwareRevision;
 
-extern int32_t AltHold;
-extern int32_t vario;
-
-void configureAltitudeHold(pidProfile_t *initialPidProfile, barometerConfig_t *intialBarometerConfig, rcControlsConfig_t *initialRcControlsConfig, escAndServoConfig_t *initialEscAndServoConfig);
-void applyAltHold(airplaneConfig_t *airplaneConfig);
-void updateAltHoldState(void);
-void updateSonarAltHoldState(void);
-void updateMocapAltHoldState(void);
-
-int32_t altitudeHoldGetEstimatedAltitude(void);
+void updateHardwareRevision(void);
+void detectHardwareRevision(void);

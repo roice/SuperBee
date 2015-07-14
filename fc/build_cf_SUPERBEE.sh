@@ -5,5 +5,5 @@ fctop=$(cd "$(dirname "$0")"; pwd)
 
 # Build cleanflight for NAZE board
 cd $fctop/cleanflight
-make clean TARGET=NAZE
-make TARGET=NAZE
+#make clean
+make TARGET=SUPERBEE

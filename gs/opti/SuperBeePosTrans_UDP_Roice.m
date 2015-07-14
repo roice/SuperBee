@@ -529,7 +529,7 @@ persistent countprint;
   %pos_z_NEE
   pos_ENU_e = int32(pos_y_NEE*100)
   pos_ENU_n = int32(pos_x_NEE*100)
-  pos_ENU_u = int32(pos_z_NEE*(-10))
+  pos_ENU_u = int32(pos_z_NEE*(-100))
   
    % preparing SuperBee SBSP message
    % message name: SBSP_FRESH_POS_OPT

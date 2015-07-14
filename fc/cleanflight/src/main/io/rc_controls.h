@@ -43,6 +43,7 @@ typedef enum {
     BOXTELEMETRY,
     BOXAUTOTUNE,
     BOXSONAR,
+    BOXMOCAP,
     CHECKBOX_ITEM_COUNT
 } boxId_e;
 
@@ -106,7 +107,7 @@ typedef enum {
 // steps are 25 apart
 // a value of 0 corresponds to a channel value of 900 or less
 // a value of 48 corresponds to a channel value of 2100 or more
-// 48 steps between 900 and 1200
+// 48 steps between 900 and 2100
 typedef struct channelRange_s {
     uint8_t startStep;
     uint8_t endStep;

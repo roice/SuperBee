@@ -219,8 +219,13 @@ void resetSensorAlignment(sensorAlignmentConfig_t *sensorAlignmentConfig)
 
 void resetEscAndServoConfig(escAndServoConfig_t *escAndServoConfig)
 {
+#ifdef SUPERBEE
+    escAndServoConfig->minthrottle = 1100;
+    escAndServoConfig->maxthrottle = 1900;
+#else
     escAndServoConfig->minthrottle = 1150;
     escAndServoConfig->maxthrottle = 1850;
+#endif
     escAndServoConfig->mincommand = 1000;
     escAndServoConfig->servoCenterPulse = 1500;
 }
@@ -272,10 +277,18 @@ void resetSerialConfig(serialConfig_t *serialConfig)
 
     for (index = 0; index < SERIAL_PORT_COUNT; index++) {
         serialConfig->portConfigs[index].identifier = serialPortIdentifiers[index];
+#ifdef SUPERBEE
+        serialConfig->portConfigs[index].msp_baudrateIndex = BAUD_57600;
+#else
         serialConfig->portConfigs[index].msp_baudrateIndex = BAUD_115200;
+#endif
         serialConfig->portConfigs[index].gps_baudrateIndex = BAUD_57600;
         serialConfig->portConfigs[index].telemetry_baudrateIndex = BAUD_AUTO;
+#ifdef SUPERBEE
+        serialConfig->portConfigs[index].blackbox_baudrateIndex = BAUD_57600;
+#else
         serialConfig->portConfigs[index].blackbox_baudrateIndex = BAUD_115200;
+#endif
     }
 
     serialConfig->portConfigs[0].functionMask = FUNCTION_MSP;
@@ -387,7 +400,11 @@ static void resetConf(void)
 
     masterConfig.boardAlignment.rollDegrees = 0;
     masterConfig.boardAlignment.pitchDegrees = 0;
+#if defined(SUPERBEE)
+    masterConfig.boardAlignment.yawDegrees = 90;
+#else
     masterConfig.boardAlignment.yawDegrees = 0;
+#endif
     masterConfig.acc_hardware = ACC_DEFAULT;     // default/autodetect
     masterConfig.max_angle_inclination = 500;    // 50 degrees
     masterConfig.yaw_control_direction = 1;
@@ -838,6 +855,32 @@ void readEEPROM(void)
     setControlRateProfile(currentProfile->defaultRateProfileIndex);
 
     validateAndFixConfig();
+
+#if defined(MOCAP)
+    modeActivationCondition_t *mac;
+    /* Activate ANGLE and MAG at all conditions */
+    mac = &currentProfile->modeActivationConditions[0];
+    mac->modeId = BOXANGLE;     // ANGLE mode
+    mac->auxChannelIndex = 0;   // AUX1
+    mac->range.startStep = 0;   // 900us
+    mac->range.endStep = 48;    // 2100us
+    mac = &currentProfile->modeActivationConditions[1];
+    mac->modeId = BOXMAG;       // MAG mode
+    mac->auxChannelIndex = 0;   // AUX1
+    mac->range.startStep = 0;   // 900us
+    mac->range.endStep = 48;    // 2100us
+
+    /* Activate MOCAP when AUX2 in 1800-2100 us */
+    mac = &currentProfile->modeActivationConditions[2];
+    mac->modeId = BOXMOCAP;     // MOCAP mode
+    mac->auxChannelIndex = 1;   // AUX2
+    mac->range.startStep = 36;  // 1800us
+    mac->range.endStep = 48;    // 2100us
+
+    useRcControlsConfig(currentProfile->modeActivationConditions, &masterConfig.escAndServoConfig, &currentProfile->pidProfile);
+
+#endif
+
     activateConfig();
 }
 
