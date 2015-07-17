@@ -30,6 +30,10 @@ struct mocap_enu_t
     bool fresh; // when this data is new, fresh == true
 };
 
+#ifdef SB_DEBUG
+extern bool sb_debug_applyAltHold;
+#endif
+
 void updateMocap(int32_t e, int32_t n, int32_t u);
 bool mocapUpdatePos(void);
 uint32_t mocapReadAltitude(void);

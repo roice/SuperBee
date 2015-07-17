@@ -45,6 +45,7 @@
 #include "sensors/barometer.h"
 #include "sensors/gyro.h"
 #include "sensors/battery.h"
+#include "sensors/mocap.h"
 
 #include "io/beeper.h"
 #include "io/display.h"
@@ -445,13 +446,12 @@ typedef enum {
 #ifdef SONAR
     UPDATE_SONAR_TASK,
 #endif
-#if defined(MOCAP)
-    UPDATE_MOCAP_TASK,
-#endif
 #if defined(BARO) || defined(SONAR) || defined(MOCAP)
     CALCULATE_ALTITUDE_TASK,
 #endif
+#ifdef DISPLAY
     UPDATE_DISPLAY_TASK
+#endif
 } periodicTasks;
 
 #define PERIODIC_TASK_COUNT (UPDATE_DISPLAY_TASK + 1)
@@ -466,16 +466,16 @@ void executePeriodicTasks(void)
     case UPDATE_COMPASS_TASK:
         if (sensors(SENSOR_MAG)) {
             updateCompass(&masterConfig.magZero);
+            break;
         }
-        break;
 #endif
 
 #if defined(BARO) && !defined(MOCAP)
     case UPDATE_BARO_TASK:
         if (sensors(SENSOR_BARO)) {
             baroUpdate(currentTime);
+            break;
         }
-        break;
 #endif
 
 #if defined(BARO) || defined(SONAR) || defined(MOCAP)
@@ -493,29 +493,25 @@ void executePeriodicTasks(void)
 #if defined(MOCAP)
         if (sensors(SENSOR_MOCAP)) {// if Motion Capture is available
 #endif
+            mocapUpdatePos();
             calculateEstimatedAltitude(currentTime);
+            break;
         }
-        break;
 #endif
 #ifdef SONAR
     case UPDATE_SONAR_TASK:
         if (sensors(SENSOR_SONAR)) {
             sonarUpdate();
+            break;
         }
-        break;
-#endif
-#ifdef MOCAP
-    case UPDATE_MOCAP_TASK:
-        if (sensors(SENSOR_MOCAP)) {
-            mocapUpdatePos();
-        }
-        break;
 #endif
 #ifdef DISPLAY
     case UPDATE_DISPLAY_TASK:
         if (feature(FEATURE_DISPLAY)) {
             updateDisplay();
+            break;
         }
+    default:
         break;
 #endif
     }
@@ -793,6 +789,10 @@ void loop(void)
             if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(MOCAP_MODE)) {
                 applyAltHold(&masterConfig.airplaneConfig);
             }
+#ifdef SB_DEBUG
+            else
+                sb_debug_applyAltHold = false;
+#endif
         }
 #endif
 

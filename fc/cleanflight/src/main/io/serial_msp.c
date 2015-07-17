@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>  // sprintf
 
 #include "build_config.h"
 #include "debug.h"
@@ -385,6 +386,9 @@ typedef enum {
 /* for SBSP protocol */
     SBSP_START, // '$'
     SBSP_B,     // 'B'
+    SBSP_ARROW,
+    SBSP_SIZE,
+    SBSP_CMD,
     SBSP_CMD_RECEIVED
 } mspState_e;
 
@@ -1721,10 +1725,35 @@ static bool sbspProcessCommand(void)
 
     // position data from OptiTrack Motion Capture
     case SBSP_FRESH_POS_OPT:
-        tmp_1 = read32();  // in 0.1mm
-        tmp_2 = read32(); // in 0.1mm
-        tmp_3 = read32();    // in 0.1mm
-        sbspHeadSerialReply(0);
+        tmp_1 = read32();   // in 0.1mm
+        tmp_2 = read32();   // in 0.1mm
+        tmp_3 = read32();   // in 0.1mm
+#ifdef SB_DEBUG
+        uint8_t debug[50], i;
+        for (i=0;i<40;i++)
+            debug[i] = 0;
+        extern int32_t  altHoldThrottleAdjustment;
+        extern float sb_debug_vel;
+        int32_t debug_accZ_tmp;
+        if (accSumCount) {
+            debug_accZ_tmp = (float)accSum[2] / (float)accSumCount;
+        } else {
+            debug_accZ_tmp = 0;
+        }
+        //sprintf(debug, "%4d %4d %4d %5d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, debug_accZ_tmp);
+        sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), (int32_t)(sb_debug_vel));
+        for (i=0; i<46; i++) {
+            if (debug[i] == 0)
+                break;
+            serialWrite(mspSerialPort, debug[i]);
+        }
+        if (sb_debug_applyAltHold == true)
+            serialWrite(mspSerialPort, 'Y');
+        else
+            serialWrite(mspSerialPort, 'N');
+        serialWrite(mspSerialPort, 0x0d);
+        serialWrite(mspSerialPort, 0x0a);
+#endif
         // update Mocap data
         updateMocap(tmp_1, tmp_2, tmp_3); 
         break;
@@ -1804,8 +1833,8 @@ static bool mspProcessReceivedData(uint8_t c)
     }
 #if defined(SUPERBEE) || defined(MOCAP)
     else if (currentPort->c_state == SBSP_B) {
-        currentPort->c_state = (c == '<') ? HEADER_ARROW : IDLE;
-    } else if (currentPort->c_state == HEADER_ARROW) {
+        currentPort->c_state = (c == '<') ? SBSP_ARROW : IDLE;
+    } else if (currentPort->c_state == SBSP_ARROW) {
         if (c > INBUF_SIZE) {
             currentPort->c_state = IDLE;
 
@@ -1815,16 +1844,16 @@ static bool mspProcessReceivedData(uint8_t c)
             currentPort->checksum = 0;
             currentPort->indRX = 0;
             currentPort->checksum ^= c;
-            currentPort->c_state = HEADER_SIZE;
+            currentPort->c_state = SBSP_SIZE;
         }
-    } else if (currentPort->c_state == HEADER_SIZE) {
+    } else if (currentPort->c_state == SBSP_SIZE) {
         currentPort->cmdMSP = c;
         currentPort->checksum ^= c;
-        currentPort->c_state = HEADER_CMD;
-    } else if (currentPort->c_state == HEADER_CMD && currentPort->offset < currentPort->dataSize) {
+        currentPort->c_state = SBSP_CMD;
+    } else if (currentPort->c_state == SBSP_CMD && currentPort->offset < currentPort->dataSize) {
         currentPort->checksum ^= c;
         currentPort->inBuf[currentPort->offset++] = c;
-    } else if (currentPort->c_state == HEADER_CMD && currentPort->offset >= currentPort->dataSize) {
+    } else if (currentPort->c_state == SBSP_CMD && currentPort->offset >= currentPort->dataSize) {
         if (currentPort->checksum == c) {
             currentPort->c_state = SBSP_CMD_RECEIVED;
         } else {

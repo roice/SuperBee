@@ -141,6 +141,17 @@ static void resetPidProfile(pidProfile_t *pidProfile)
 {
     pidProfile->pidController = 0;
 
+#ifdef SUPERBEE
+    pidProfile->P8[ROLL] = 32;
+    pidProfile->I8[ROLL] = 31;
+    pidProfile->D8[ROLL] = 23;
+    pidProfile->P8[PITCH] = 32;
+    pidProfile->I8[PITCH] = 30;
+    pidProfile->D8[PITCH] = 23;
+    pidProfile->P8[YAW] = 84;
+    pidProfile->I8[YAW] = 31;
+    pidProfile->D8[YAW] = 23;
+#else
     pidProfile->P8[ROLL] = 40;
     pidProfile->I8[ROLL] = 30;
     pidProfile->D8[ROLL] = 23;
@@ -150,9 +161,10 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->P8[YAW] = 85;
     pidProfile->I8[YAW] = 45;
     pidProfile->D8[YAW] = 0;
-    pidProfile->P8[PIDALT] = 50;
-    pidProfile->I8[PIDALT] = 0;
-    pidProfile->D8[PIDALT] = 0;
+#endif
+    pidProfile->P8[PIDALT] = 50;    // GUI: 5.0
+    pidProfile->I8[PIDALT] = 0;     // GUI: 0.000
+    pidProfile->D8[PIDALT] = 0;     // GUI: 0
     pidProfile->P8[PIDPOS] = 15; // POSHOLD_P * 100;
     pidProfile->I8[PIDPOS] = 0; // POSHOLD_I * 100;
     pidProfile->D8[PIDPOS] = 0;
@@ -166,9 +178,9 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->I8[PIDLEVEL] = 10;
     pidProfile->D8[PIDLEVEL] = 100;
     pidProfile->P8[PIDMAG] = 40;
-    pidProfile->P8[PIDVEL] = 120;
-    pidProfile->I8[PIDVEL] = 45;
-    pidProfile->D8[PIDVEL] = 1;
+    pidProfile->P8[PIDVEL] = 120;   // GUI: 12.0
+    pidProfile->I8[PIDVEL] = 45;    // GUI: 0.045
+    pidProfile->D8[PIDVEL] = 1;     // GUI: 1
 
     pidProfile->yaw_p_limit = YAW_P_LIMIT_MAX;
     pidProfile->dterm_cut_hz = 0;
@@ -206,8 +218,12 @@ void resetBarometerConfig(barometerConfig_t *barometerConfig)
 {
     barometerConfig->baro_sample_count = 21;
     barometerConfig->baro_noise_lpf = 0.6f;
+#ifdef MOCAP
+    barometerConfig->baro_cf_vel = 0.0f;
+#else
     barometerConfig->baro_cf_vel = 0.985f;
     barometerConfig->baro_cf_alt = 0.965f;
+#endif
 }
 
 void resetSensorAlignment(sensorAlignmentConfig_t *sensorAlignmentConfig)
@@ -255,7 +271,7 @@ void resetBatteryConfig(batteryConfig_t *batteryConfig)
     batteryConfig->vbatscale = VBAT_SCALE_DEFAULT;
     batteryConfig->vbatmaxcellvoltage = 43;
     batteryConfig->vbatmincellvoltage = 33;
-    batteryConfig->vbatwarningcellvoltage = 35;
+    batteryConfig->vbatwarningcellvoltage = 36;
     batteryConfig->currentMeterOffset = 0;
     batteryConfig->currentMeterScale = 400; // for Allegro ACS758LCB-100U (40mV/A)
     batteryConfig->batteryCapacity = 0;
@@ -317,10 +333,17 @@ static void resetControlRateConfig(controlRateConfig_t *controlRateConfig) {
 }
 
 void resetRcControlsConfig(rcControlsConfig_t *rcControlsConfig) {
+#ifdef SUPERBEE
+    rcControlsConfig->deadband = 10;
+    rcControlsConfig->yaw_deadband = 10;
+    rcControlsConfig->alt_hold_deadband = 40;
+    rcControlsConfig->alt_hold_fast_change = 0;
+#else
     rcControlsConfig->deadband = 0;
     rcControlsConfig->yaw_deadband = 0;
     rcControlsConfig->alt_hold_deadband = 40;
     rcControlsConfig->alt_hold_fast_change = 1;
+#endif
 }
 
 void resetMixerConfig(mixerConfig_t *mixerConfig) {
@@ -461,7 +484,7 @@ static void resetConf(void)
 
     resetSerialConfig(&masterConfig.serialConfig);
 
-    masterConfig.looptime = 3500;
+    masterConfig.looptime = 3000;
     masterConfig.emf_avoidance = 0;
 
     resetPidProfile(&currentProfile->pidProfile);
@@ -534,6 +557,10 @@ static void resetConf(void)
 #endif
     masterConfig.blackbox_rate_num = 1;
     masterConfig.blackbox_rate_denom = 1;
+#endif
+
+#ifdef SUPERBEE
+    featureSet(FEATURE_MOTOR_STOP);
 #endif
 
     // alternative defaults settings for ALIENWIIF1 and ALIENWIIF3 targets

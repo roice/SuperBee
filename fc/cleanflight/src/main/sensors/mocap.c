@@ -22,6 +22,10 @@ static uint32_t mocapAlt = 0;    // in cm
 /* Global parameters */
 struct mocap_enu_t mocap_enu = {0,0,0,0,false};
 
+#ifdef SB_DEBUG
+bool sb_debug_applyAltHold = false;
+#endif
+
 /* Functions -- R/W/Compute... */
 void updateMocap(int32_t e, int32_t n, int32_t u)
 {
@@ -41,7 +45,7 @@ bool mocapUpdatePos(void)
     }
 
     mocap_enu.fresh = false;
-    mocapAlt = mocap_enu.up / 100;  // cm
+    mocapAlt = mocap_enu.up / 10;  // mm
     setMocapAltReadyFlag();
 
     return true;

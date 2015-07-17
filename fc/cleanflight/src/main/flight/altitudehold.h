@@ -31,3 +31,7 @@ void updateSonarAltHoldState(void);
 void updateMocapAltHoldState(void);
 
 int32_t altitudeHoldGetEstimatedAltitude(void);
+
+#ifdef SB_DEBUG
+uint8_t sb_debug_ReadAltHoldPID(uint8_t index);
+#endif
