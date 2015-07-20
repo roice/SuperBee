@@ -286,7 +286,8 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
-    static uint32_t previousTime;
+    static uint32_t estaltPreviousTime = 0;
+    uint32_t        estaltCurrentTime = micros();
     uint32_t dTime;
     int32_t baroVel;
     float dt;
@@ -308,7 +309,16 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     int16_t tiltAngle;
 #endif
 
-    dTime = currentTime - previousTime;
+    if (estaltPreviousTime == 0)
+    {// skip first entering to initialize estaltPreviousTime for computing dTime
+        estaltPreviousTime = estaltCurrentTime;
+#ifdef MOCAP
+        clearMocapAltReadyFlag();
+#endif
+        return;
+    }
+
+    dTime = estaltCurrentTime - estaltPreviousTime;
 #ifdef MOCAP
     if (isMocapAltReady())  // if alt data calc from Motion Capture is ready
         clearMocapAltReadyFlag();   // clear mocapAlt
@@ -319,7 +329,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
         return;
 #endif
 
-    previousTime = currentTime;
+    estaltPreviousTime = estaltCurrentTime;
 
 #ifdef BARO
     if (!isBaroCalibrationComplete()) {

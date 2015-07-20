@@ -493,8 +493,8 @@ void executePeriodicTasks(void)
 #if defined(MOCAP)
         if (sensors(SENSOR_MOCAP)) {// if Motion Capture is available
 #endif
-            mocapUpdatePos();
-            calculateEstimatedAltitude(currentTime);
+            //mocapUpdatePos();
+            //calculateEstimatedAltitude(currentTime);
             break;
         }
 #endif

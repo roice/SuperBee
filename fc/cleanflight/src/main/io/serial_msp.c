@@ -1721,6 +1721,7 @@ static bool sbspProcessCommand(void)
         serialize8(masterConfig.mixerMode);
         serialize8(MSP_PROTOCOL_VERSION);
         serialize32(CAP_DYNBALANCE | (masterConfig.airplaneConfig.flaps_speed ? CAP_FLAPS : 0)); // "capability"
+        tailSerialReply();
         break;
 
     // position data from OptiTrack Motion Capture
@@ -1728,12 +1729,21 @@ static bool sbspProcessCommand(void)
         tmp_1 = read32();   // in 0.1mm
         tmp_2 = read32();   // in 0.1mm
         tmp_3 = read32();   // in 0.1mm
+        // update Mocap data
+        //updateMocap(tmp_1, tmp_2, tmp_3);
+        //mocapUpdatePos();
+        //calculateEstimatedAltitude(0);
 #ifdef SB_DEBUG
-        uint8_t debug[50], i;
-        for (i=0;i<40;i++)
+        static uint32_t sb_debug_pre_time;
+        uint32_t sb_debug_cur_time;
+        extern float sb_debug_vel;
+        sb_debug_cur_time = micros(); 
+        extern uint32_t hse_value;
+        uint8_t debug[60], i;
+        for (i=0;i<60;i++)
             debug[i] = 0;
         extern int32_t  altHoldThrottleAdjustment;
-        extern float sb_debug_vel;
+        
         int32_t debug_accZ_tmp;
         if (accSumCount) {
             debug_accZ_tmp = (float)accSum[2] / (float)accSumCount;
@@ -1741,8 +1751,10 @@ static bool sbspProcessCommand(void)
             debug_accZ_tmp = 0;
         }
         //sprintf(debug, "%4d %4d %4d %5d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, debug_accZ_tmp);
-        sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), (int32_t)(sb_debug_vel));
-        for (i=0; i<46; i++) {
+        //sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d %8d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), sb_debug_cur_time - sb_debug_pre_time, hse_value);
+        sprintf(debug, "%10d", sb_debug_cur_time - sb_debug_pre_time);
+        sb_debug_pre_time = sb_debug_cur_time;
+        for (i=0; i<60; i++) {
             if (debug[i] == 0)
                 break;
             serialWrite(mspSerialPort, debug[i]);
@@ -1753,9 +1765,7 @@ static bool sbspProcessCommand(void)
             serialWrite(mspSerialPort, 'N');
         serialWrite(mspSerialPort, 0x0d);
         serialWrite(mspSerialPort, 0x0a);
-#endif
-        // update Mocap data
-        updateMocap(tmp_1, tmp_2, tmp_3); 
+#endif 
         break;
  
     default:
@@ -1771,7 +1781,6 @@ static void sbspProcessReceivedCommand() {
     if (!(sbspProcessCommand())) {
         sbspHeadSerialError(0);
     }
-    tailSerialReply();
     currentPort->c_state = IDLE;
 }
 
