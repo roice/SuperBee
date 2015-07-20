@@ -741,10 +741,12 @@ void loop(void)
         // if GPS feature is enabled, gpsThread() will be called at some intervals to check for stuck
         // hardware, wrong baud rates, init GPS if needed, etc. Don't use SENSOR_GPS here as gpsThread() can and will
         // change this based on available hardware
-#ifdef GPS
+#if defined(GPS)
         if (feature(FEATURE_GPS)) {
             gpsThread();
         }
+#elif defined(MOCAP)
+        gpsThread();
 #endif
     }
 
@@ -815,7 +817,7 @@ void loop(void)
             rcCommand[THROTTLE] += calculateThrottleAngleCorrection(currentProfile->throttle_correction_value);
         }
 
-#ifdef GPS
+#if defined(GPS) || defined(MOCAP)
         if (sensors(SENSOR_GPS)) {
             if ((FLIGHT_MODE(GPS_HOME_MODE) || FLIGHT_MODE(GPS_HOLD_MODE)) && STATE(GPS_FIX_HOME)) {
                 updateGpsStateForHomeAndHoldMode();

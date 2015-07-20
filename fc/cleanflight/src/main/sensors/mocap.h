@@ -36,9 +36,13 @@ extern bool sb_debug_applyAltHold;
 
 void updateMocap(int32_t e, int32_t n, int32_t u);
 bool mocapUpdatePos(void);
-uint32_t mocapReadAltitude(void);
+int32_t mocapReadAltitude(void);
+int32_t mocapReadGPSLL(uint8_t index);
 bool isMocapAltReady(void);
 void setMocapAltReadyFlag(void);
 void clearMocapAltReadyFlag(void);
+bool isMocapGPSReady(void);
+void setMocapGPSReadyFlag(void);
+void clearMocapGPSReadyFlag(void);
 
 #endif
