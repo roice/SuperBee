@@ -64,7 +64,7 @@ static escAndServoConfig_t *escAndServoConfig;
 
 #ifdef SB_DEBUG
 
-float sb_debug_vel;
+int32_t sb_debug_vel;
 
 // read PID value for Alt Hold
 // index:
@@ -118,7 +118,8 @@ void configureAltitudeHold(
 
 #if defined(BARO) || defined(SONAR) || defined(MOCAP)
 
-static int16_t initialThrottleHold;
+static int16_t initialThrottleHoldrcCommand;
+static int16_t initialThrottleHoldrcData;
 static int32_t EstAlt;                // in cm (BARO), in mm (MOCAP)
 
 // 40hz update rate (20hz LPF on acc)
@@ -132,22 +133,22 @@ static void applyMultirotorAltHold(void)
     // multirotor alt hold
     if (rcControlsConfig->alt_hold_fast_change) {
         // rapid alt changes
-        if (ABS(rcData[THROTTLE] - initialThrottleHold) > rcControlsConfig->alt_hold_deadband) {
+        if (ABS(rcData[THROTTLE] - initialThrottleHoldrcData) > rcControlsConfig->alt_hold_deadband) {
             errorVelocityI = 0;
             isAltHoldChanged = 1;
-            rcCommand[THROTTLE] += (rcData[THROTTLE] > initialThrottleHold) ? -rcControlsConfig->alt_hold_deadband : rcControlsConfig->alt_hold_deadband;
+            rcCommand[THROTTLE] += (rcData[THROTTLE] > initialThrottleHoldrcData) ? -rcControlsConfig->alt_hold_deadband : rcControlsConfig->alt_hold_deadband;
         } else {
             if (isAltHoldChanged) {
                 AltHold = EstAlt;
                 isAltHoldChanged = 0;
             }
-            rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, escAndServoConfig->minthrottle, escAndServoConfig->maxthrottle);
+            rcCommand[THROTTLE] = constrain(initialThrottleHoldrcCommand + altHoldThrottleAdjustment, escAndServoConfig->minthrottle, escAndServoConfig->maxthrottle);
         }
     } else {
         // slow alt changes, mostly used for aerial photography
-        if (ABS(rcData[THROTTLE] - initialThrottleHold) > rcControlsConfig->alt_hold_deadband) {
+        if (ABS(rcData[THROTTLE] - initialThrottleHoldrcData) > rcControlsConfig->alt_hold_deadband) {
             // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-            setVelocity = (rcData[THROTTLE] - initialThrottleHold) / 2;
+            setVelocity = (rcData[THROTTLE] - initialThrottleHoldrcData) / 2;
             velocityControl = 1;
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {
@@ -155,7 +156,7 @@ static void applyMultirotorAltHold(void)
             velocityControl = 0;
             isAltHoldChanged = 0;
         }
-        rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, escAndServoConfig->minthrottle, escAndServoConfig->maxthrottle);
+        rcCommand[THROTTLE] = constrain(initialThrottleHoldrcCommand + altHoldThrottleAdjustment, escAndServoConfig->minthrottle, escAndServoConfig->maxthrottle);
     }
 }
 
@@ -191,7 +192,8 @@ void updateAltHoldState(void)
     if (!FLIGHT_MODE(BARO_MODE)) {
         ENABLE_FLIGHT_MODE(BARO_MODE);
         AltHold = EstAlt;
-        initialThrottleHold = rcCommand[THROTTLE];
+        initialThrottleHoldrcCommand = rcCommand[THROTTLE];
+        initialThrottleHoldrcData = rcData[THROTTLE];
         errorVelocityI = 0;
         altHoldThrottleAdjustment = 0;
     }
@@ -208,7 +210,8 @@ void updateSonarAltHoldState(void)
     if (!FLIGHT_MODE(SONAR_MODE)) {
         ENABLE_FLIGHT_MODE(SONAR_MODE);
         AltHold = EstAlt;
-        initialThrottleHold = rcCommand[THROTTLE];
+        initialThrottleHoldrcCommand = rcCommand[THROTTLE];
+        initialThrottleHoldrcData = rcData[THROTTLE];
         errorVelocityI = 0;
         altHoldThrottleAdjustment = 0;
     }
@@ -225,7 +228,8 @@ void updateMocapAltHoldState(void)
     if (!FLIGHT_MODE(MOCAP_MODE)) {
         ENABLE_FLIGHT_MODE(MOCAP_MODE);
         AltHold = EstAlt;
-        initialThrottleHold = rcCommand[THROTTLE];
+        initialThrottleHoldrcCommand = rcCommand[THROTTLE];
+        initialThrottleHoldrcData = rcData[THROTTLE];
         errorVelocityI = 0;
         altHoldThrottleAdjustment = 0;
         // beep
@@ -267,6 +271,9 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     } else {
         setVel = setVelocity;
     }
+
+sb_debug_vel = setVel;
+
     // Velocity PID-Controller
 
     // P
@@ -319,6 +326,9 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     }
 
     dTime = estaltCurrentTime - estaltPreviousTime;
+    
+//sb_debug_vel = dTime;
+
 #ifdef MOCAP
     if (isMocapAltReady())  // if alt data calc from Motion Capture is ready
         clearMocapAltReadyFlag();   // clear mocapAlt
@@ -416,7 +426,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity).
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e without delay
     vel = vel * barometerConfig->baro_cf_vel + baroVel * (1.0f - barometerConfig->baro_cf_vel);
-    sb_debug_vel = dTime;
+    //sb_debug_vel = dTime;
     vel_tmp = lrintf(vel);
 
     // set vario

@@ -1730,14 +1730,14 @@ static bool sbspProcessCommand(void)
         tmp_2 = read32();   // in 0.1mm
         tmp_3 = read32();   // in 0.1mm
         // update Mocap data
-        //updateMocap(tmp_1, tmp_2, tmp_3);
-        //mocapUpdatePos();
-        //calculateEstimatedAltitude(0);
+        updateMocap(tmp_1, tmp_2, tmp_3);
+        mocapUpdatePos();
+        calculateEstimatedAltitude(0);
 #ifdef SB_DEBUG
-        static uint32_t sb_debug_pre_time;
-        uint32_t sb_debug_cur_time;
-        extern float sb_debug_vel;
-        sb_debug_cur_time = micros(); 
+        //static uint32_t sb_debug_pre_time;
+        //uint32_t sb_debug_cur_time;
+        extern int32_t sb_debug_vel;
+        //sb_debug_cur_time = micros(); 
         extern uint32_t hse_value;
         uint8_t debug[60], i;
         for (i=0;i<60;i++)
@@ -1751,9 +1751,9 @@ static bool sbspProcessCommand(void)
             debug_accZ_tmp = 0;
         }
         //sprintf(debug, "%4d %4d %4d %5d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, debug_accZ_tmp);
-        //sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d %8d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), sb_debug_cur_time - sb_debug_pre_time, hse_value);
-        sprintf(debug, "%10d", sb_debug_cur_time - sb_debug_pre_time);
-        sb_debug_pre_time = sb_debug_cur_time;
+        sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d %8d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), sb_debug_vel, hse_value);
+        //sprintf(debug, "%10d", sb_debug_cur_time - sb_debug_pre_time);
+        //sb_debug_pre_time = sb_debug_cur_time;
         for (i=0; i<60; i++) {
             if (debug[i] == 0)
                 break;
