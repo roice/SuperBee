@@ -1730,17 +1730,17 @@ static bool sbspProcessCommand(void)
         tmp_2 = read32();   // in 0.1mm
         tmp_3 = read32();   // in 0.1mm
         // update Mocap data
-        updateMocap(tmp_1, tmp_2, tmp_3);
-        mocapUpdatePos();
-        calculateEstimatedAltitude(0);
+        updateMocap(tmp_1, tmp_2, tmp_3);   // update mocap struct
+        mocapUpdatePos();   // calculate altitude and lat/lon
+        calculateEstimatedAltitude(micros());  // calculate alt hold pid
 #ifdef SB_DEBUG
         //static uint32_t sb_debug_pre_time;
         //uint32_t sb_debug_cur_time;
         extern int32_t sb_debug_vel;
         //sb_debug_cur_time = micros(); 
         extern uint32_t hse_value;
-        uint8_t debug[60], i;
-        for (i=0;i<60;i++)
+        uint8_t debug[80], i;
+        for (i=0;i<80;i++)
             debug[i] = 0;
         extern int32_t  altHoldThrottleAdjustment;
         
@@ -1751,10 +1751,15 @@ static bool sbspProcessCommand(void)
             debug_accZ_tmp = 0;
         }
         //sprintf(debug, "%4d %4d %4d %5d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, debug_accZ_tmp);
-        sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d %8d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), sb_debug_vel, hse_value);
+        //sprintf(debug, "%4d %4d %4d %3d %3d %3d %3d %5d %8d ", altitudeHoldGetEstimatedAltitude(), AltHold, altHoldThrottleAdjustment, sb_debug_ReadAltHoldPID(0), sb_debug_ReadAltHoldPID(3), sb_debug_ReadAltHoldPID(4), sb_debug_ReadAltHoldPID(5), sb_debug_vel, hse_value);
         //sprintf(debug, "%10d", sb_debug_cur_time - sb_debug_pre_time);
+        extern int16_t GPS_angle[2];
+        extern int16_t rate_error[2];
+        extern int16_t nav[2];
+        extern int16_t heading;
+        sprintf(debug, "%10d %10d %10d %10d %5d %5d %5d ", GPS_coord[0], GPS_coord[1], GPS_hold[0], GPS_hold[1], heading, GPS_angle[0], GPS_angle[1]);
         //sb_debug_pre_time = sb_debug_cur_time;
-        for (i=0; i<60; i++) {
+        for (i=0; i<80; i++) {
             if (debug[i] == 0)
                 break;
             serialWrite(mspSerialPort, debug[i]);

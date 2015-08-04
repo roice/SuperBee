@@ -151,6 +151,25 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->P8[YAW] = 84;
     pidProfile->I8[YAW] = 31;
     pidProfile->D8[YAW] = 23;
+    pidProfile->P8[PIDALT] = 50;    // GUI: 5.0
+    pidProfile->I8[PIDALT] = 0;     // GUI: 0.000
+    pidProfile->D8[PIDALT] = 0;     // GUI: 0
+    pidProfile->P8[PIDPOS] = 15; // POSHOLD_P * 100;
+    pidProfile->I8[PIDPOS] = 0; // POSHOLD_I * 100;
+    pidProfile->D8[PIDPOS] = 0;
+    pidProfile->P8[PIDPOSR] = 18; // POSHOLD_RATE_P * 10;
+    pidProfile->I8[PIDPOSR] = 16; // POSHOLD_RATE_I * 100;
+    pidProfile->D8[PIDPOSR] = 5; // POSHOLD_RATE_D * 1000;
+    pidProfile->P8[PIDNAVR] = 25; // NAV_P * 10;
+    pidProfile->I8[PIDNAVR] = 33; // NAV_I * 100;
+    pidProfile->D8[PIDNAVR] = 83; // NAV_D * 1000;
+    pidProfile->P8[PIDLEVEL] = 90;
+    pidProfile->I8[PIDLEVEL] = 10;
+    pidProfile->D8[PIDLEVEL] = 100;
+    pidProfile->P8[PIDMAG] = 40;
+    pidProfile->P8[PIDVEL] = 12;   // GUI: 1.2
+    pidProfile->I8[PIDVEL] = 35;    // GUI: 0.035
+    pidProfile->D8[PIDVEL] = 0;     // GUI: 0
 #else
     pidProfile->P8[ROLL] = 40;
     pidProfile->I8[ROLL] = 30;
@@ -161,7 +180,6 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->P8[YAW] = 85;
     pidProfile->I8[YAW] = 45;
     pidProfile->D8[YAW] = 0;
-#endif
     pidProfile->P8[PIDALT] = 50;    // GUI: 5.0
     pidProfile->I8[PIDALT] = 0;     // GUI: 0.000
     pidProfile->D8[PIDALT] = 0;     // GUI: 0
@@ -169,8 +187,8 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->I8[PIDPOS] = 0; // POSHOLD_I * 100;
     pidProfile->D8[PIDPOS] = 0;
     pidProfile->P8[PIDPOSR] = 34; // POSHOLD_RATE_P * 10;
-    pidProfile->I8[PIDPOSR] = 14; // POSHOLD_RATE_I * 100;
-    pidProfile->D8[PIDPOSR] = 53; // POSHOLD_RATE_D * 1000;
+    pidProfile->I8[PIDPOSR] = 0; // POSHOLD_RATE_I * 100;
+    pidProfile->D8[PIDPOSR] = 0; // POSHOLD_RATE_D * 1000;
     pidProfile->P8[PIDNAVR] = 25; // NAV_P * 10;
     pidProfile->I8[PIDNAVR] = 33; // NAV_I * 100;
     pidProfile->D8[PIDNAVR] = 83; // NAV_D * 1000;
@@ -181,6 +199,7 @@ static void resetPidProfile(pidProfile_t *pidProfile)
     pidProfile->P8[PIDVEL] = 120;   // GUI: 12.0
     pidProfile->I8[PIDVEL] = 45;    // GUI: 0.045
     pidProfile->D8[PIDVEL] = 1;     // GUI: 1
+#endif
 
     pidProfile->yaw_p_limit = YAW_P_LIMIT_MAX;
     pidProfile->dterm_cut_hz = 0;
@@ -204,6 +223,15 @@ static void resetPidProfile(pidProfile_t *pidProfile)
 #ifdef GPS
 void resetGpsProfile(gpsProfile_t *gpsProfile)
 {
+#ifdef MOCAP
+    gpsProfile->gps_wp_radius = 20; // 20 mm
+    gpsProfile->gps_lpf = 20;
+    gpsProfile->nav_slew_rate = 30;
+    gpsProfile->nav_controls_heading = 1;
+    gpsProfile->nav_speed_min = 100;
+    gpsProfile->nav_speed_max = 300;
+    gpsProfile->ap_mode = 40;
+#else
     gpsProfile->gps_wp_radius = 200;
     gpsProfile->gps_lpf = 20;
     gpsProfile->nav_slew_rate = 30;
@@ -211,6 +239,7 @@ void resetGpsProfile(gpsProfile_t *gpsProfile)
     gpsProfile->nav_speed_min = 100;
     gpsProfile->nav_speed_max = 300;
     gpsProfile->ap_mode = 40;
+#endif
 }
 #endif
 
@@ -497,7 +526,9 @@ static void resetConf(void)
 
     resetRollAndPitchTrims(&currentProfile->accelerometerTrims);
 
-    currentProfile->mag_declination = 0;
+    // Lat 39°6'33" N, Lon 117°10'19.4" E, Tianjin University, China
+    // Magnetic declination: -6°44', NEGATIVE(WEST),
+    currentProfile->mag_declination = -644;
     currentProfile->acc_lpf_factor = 4;
     currentProfile->accz_lpf_cutoff = 5.0f;
     currentProfile->accDeadband.xy = 40;

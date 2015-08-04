@@ -663,7 +663,7 @@ void processRx(void)
     }
 #endif
 
-#ifdef GPS
+#if defined(GPS)
     if (sensors(SENSOR_GPS)) {
         updateGpsWaypointsAndMode();
     }
@@ -729,7 +729,7 @@ void loop(void)
         // the 'annexCode' initialses rcCommand, updateAltHoldState depends on valid rcCommand data.
         if (haveProcessedAnnexCodeOnce) {
             if (sensors(SENSOR_MOCAP)) {
-                updateMocapAltHoldState();
+                updateMocapState();  // update AltHold state and Flightmode MOCAP_MODE
             }
         }
 #endif
@@ -738,16 +738,17 @@ void loop(void)
         // not processing rx this iteration
         executePeriodicTasks();
 
+
+#if defined(MOCAP)
+        gpsThread();
+#elif defined(GPS)
         // if GPS feature is enabled, gpsThread() will be called at some intervals to check for stuck
         // hardware, wrong baud rates, init GPS if needed, etc. Don't use SENSOR_GPS here as gpsThread() can and will
         // change this based on available hardware
-#if defined(GPS)
         if (feature(FEATURE_GPS)) {
             gpsThread();
         }
-#elif defined(MOCAP)
-        gpsThread();
-#endif
+#endif        
     }
 
     currentTime = micros();
@@ -818,8 +819,8 @@ void loop(void)
         }
 
 #if defined(GPS) || defined(MOCAP)
-        if (sensors(SENSOR_GPS)) {
-            if ((FLIGHT_MODE(GPS_HOME_MODE) || FLIGHT_MODE(GPS_HOLD_MODE)) && STATE(GPS_FIX_HOME)) {
+        if (sensors(SENSOR_GPS) || sensors(SENSOR_MOCAP)) {
+            if (((FLIGHT_MODE(GPS_HOME_MODE) || FLIGHT_MODE(GPS_HOLD_MODE)) && STATE(GPS_FIX_HOME)) || FLIGHT_MODE(MOCAP_MODE)) {
                 updateGpsStateForHomeAndHoldMode();
             }
         }

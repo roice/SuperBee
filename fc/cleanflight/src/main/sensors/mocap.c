@@ -9,10 +9,36 @@
 
 #include "platform.h"
 
+#include "common/maths.h"
+#include "common/axis.h"
+
 #include "drivers/system.h"
+#include "drivers/sensor.h"
+#include "drivers/accgyro.h"
+
+#include "io/rc_controls.h"
+#include "io/beeper.h"
+#include "io/gps.h"
+#include "io/gimbal.h"
+
 #include "sensors/mocap.h"
+#include "sensors/sensors.h"
+#include "sensors/acceleration.h"
+
+#include "flight/mixer.h"
+#include "flight/pid.h"
+#include "flight/navigation.h"
+#include "flight/altitudehold.h"
+#include "flight/imu.h"
+
+#include "config/config.h"
+#include "config/runtime_config.h"
+#include "config/config_profile.h"
 
 #ifdef MOCAP
+
+// extern
+extern profile_t *currentProfile;
 
 // Motion Capture Altitude Ready Flag
 static bool mocapAltReady = false;
@@ -77,15 +103,15 @@ bool mocapUpdatePos(void)
     // Note: As coordinates conversion is a tough task (matrix, LAPACK,...),
     // so here simply uses linearized function
     /* save opt pos to temp array */
-    position_e[0] = (double)mocap_enu.east / (double)10000.0f;
-    position_e[1] = (double)mocap_enu.north / (double)10000.0f;
+    position_e[0] = (double)mocap_enu.north / (double)10000.0f;  // lat
+    position_e[1] = (double)mocap_enu.east / (double)10000.0f; // lon
     /* convert local ENU to LLH
      * This function is linearized and the position to be converted is limited
      * to no more than 100 m to the original pos llh 0.0 N 0.0E */
     enu2llh(position_e, converted_pos);
 
-    mocapGPS_coord[0] = (int32_t)(converted_pos[0] * 100000000.0f);
-    mocapGPS_coord[1] = (int32_t)(converted_pos[1] * 100000000.0f);
+    mocapGPS_coord[0] = (int32_t)(converted_pos[0] * (double)100000000.0f);
+    mocapGPS_coord[1] = (int32_t)(converted_pos[1] * (double)100000000.0f);
 
     setMocapGPSReadyFlag();
     return true;
@@ -96,10 +122,58 @@ int32_t mocapReadAltitude(void) {
 }
 
 int32_t mocapReadGPSLL(uint8_t index) {
-    if (index >= 0 && index <= 1)
+    if (index == 0 || index == 1)
         return mocapGPS_coord[index];
     else
         return 0;
+}
+
+void updateMocapState(void)
+{
+    static bool navPosHold = false;
+
+    // Mocap activate
+    if (!IS_RC_MODE_ACTIVE(BOXMOCAP)) {
+        DISABLE_FLIGHT_MODE(MOCAP_MODE);
+        return;
+    }
+
+    // Mocap flight mode activate & althold gpshold init
+    if (!FLIGHT_MODE(MOCAP_MODE)) {
+        ENABLE_FLIGHT_MODE(MOCAP_MODE);
+
+        // for Alititude hold
+        AltHold = EstAlt;
+        initialThrottleHoldrcCommand = rcCommand[THROTTLE];
+        initialThrottleHoldrcData = rcData[THROTTLE];
+        errorVelocityI = 0;
+        altHoldThrottleAdjustment = 0;
+    }
+
+    // for Lat/Lon hold
+    if (FLIGHT_MODE(MOCAP_MODE))
+    {
+        if (areSticksInApModePosition(currentProfile->gpsProfile.ap_mode))
+        {// stick in middle position
+            if (navPosHold == false)
+            {// entering Position hold mode
+                GPS_hold[LAT] = GPS_coord[LAT];
+                GPS_hold[LON] = GPS_coord[LON];
+                GPS_set_next_wp(&GPS_hold[LAT], &GPS_hold[LON]);
+                nav_mode = NAV_MODE_POSHOLD;
+                GPS_reset_nav();
+                navPosHold = true;
+                // beep
+                beeper(BEEPER_ARMING_GPS_FIX);
+            }
+        }
+        else
+        {// manually control roll pitch
+            nav_mode = NAV_MODE_NONE;
+            GPS_reset_nav();
+            navPosHold = false;
+        }
+    } 
 }
 
 /* Functions -- Flags */

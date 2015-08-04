@@ -118,9 +118,9 @@ void configureAltitudeHold(
 
 #if defined(BARO) || defined(SONAR) || defined(MOCAP)
 
-static int16_t initialThrottleHoldrcCommand;
-static int16_t initialThrottleHoldrcData;
-static int32_t EstAlt;                // in cm (BARO), in mm (MOCAP)
+int16_t initialThrottleHoldrcCommand;
+int16_t initialThrottleHoldrcData;
+int32_t EstAlt;                // in cm (BARO), in mm (MOCAP)
 
 // 40hz update rate (20hz LPF on acc)
 #define BARO_UPDATE_FREQUENCY_40HZ (1000 * 25)
@@ -217,26 +217,6 @@ void updateSonarAltHoldState(void)
     }
 }
 
-void updateMocapAltHoldState(void)
-{
-    // Mocap alt hold activate
-    if (!IS_RC_MODE_ACTIVE(BOXMOCAP)) {
-        DISABLE_FLIGHT_MODE(MOCAP_MODE);
-        return;
-    }
-
-    if (!FLIGHT_MODE(MOCAP_MODE)) {
-        ENABLE_FLIGHT_MODE(MOCAP_MODE);
-        AltHold = EstAlt;
-        initialThrottleHoldrcCommand = rcCommand[THROTTLE];
-        initialThrottleHoldrcData = rcData[THROTTLE];
-        errorVelocityI = 0;
-        altHoldThrottleAdjustment = 0;
-        // beep
-        beeper(BEEPER_ARMING_GPS_FIX);
-    }
-}
-
 bool isThrustFacingDownwards(rollAndPitchInclination_t *inclination)
 {
     return ABS(inclination->values.rollDeciDegrees) < DEGREES_80_IN_DECIDEGREES && ABS(inclination->values.pitchDeciDegrees) < DEGREES_80_IN_DECIDEGREES;
@@ -294,7 +274,7 @@ sb_debug_vel = setVel;
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
     static uint32_t estaltPreviousTime = 0;
-    uint32_t        estaltCurrentTime = micros();
+    uint32_t estaltCurrentTime = currentTime;
     uint32_t dTime;
     int32_t baroVel;
     float dt;

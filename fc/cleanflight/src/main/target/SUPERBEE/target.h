@@ -107,10 +107,13 @@
 #undef BARO
 #undef USE_BARO_MS5611
 #undef USE_BARO_BMP085
+//#undef GPS
+#define GPS
 #else
 #define BARO
 #define USE_BARO_MS5611
 #define USE_BARO_BMP085
+#define GPS
 #endif
 
 #define MAG
@@ -175,8 +178,6 @@
 #define EXTERNAL1_ADC_GPIO          GPIOA
 #define EXTERNAL1_ADC_GPIO_PIN      GPIO_Pin_5
 #define EXTERNAL1_ADC_CHANNEL       ADC_Channel_5
-
-#define GPS
 
 #define LED_STRIP
 #define LED_STRIP_TIMER TIM3

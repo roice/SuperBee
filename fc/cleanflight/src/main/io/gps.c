@@ -51,7 +51,7 @@
 #include "config/runtime_config.h"
 
 
-#ifdef GPS
+#if defined(GPS)
 
 #define LOG_ERROR        '?'
 #define LOG_IGNORED      '!'
@@ -415,8 +415,8 @@ static bool mocapGPSNewData(void)
 
     /* Refresh GPS state */
     //save to global parameter
-    GPS_coord[0] = mocapReadGPSLL(0);
-    GPS_coord[1] = mocapReadGPSLL(1);
+    GPS_coord[0] = mocapReadGPSLL(0);   // lat
+    GPS_coord[1] = mocapReadGPSLL(1);   // lon
     ENABLE_STATE(GPS_FIX);  // have a good GPS 3D FIX
     GPS_numSat = 8; // >5 indicates good GPS signal
 
@@ -425,7 +425,9 @@ static bool mocapGPSNewData(void)
     
     gpsData.lastLastMessage = gpsData.lastMessage;
     gpsData.lastMessage = millis();
-    sensorsSet(SENSOR_GPS);
+
+    // not to call updateGpsWaypointsAndMode();
+    sensorsClear(SENSOR_GPS);
 
     onGpsNewData();
 

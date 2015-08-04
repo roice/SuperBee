@@ -6,7 +6,6 @@
  * Author       Date        Changelog
  * Roice Luo    2015.07.02  Create
  */
-#include "platform.h"
 
 #pragma once
 
@@ -38,6 +37,7 @@ void updateMocap(int32_t e, int32_t n, int32_t u);
 bool mocapUpdatePos(void);
 int32_t mocapReadAltitude(void);
 int32_t mocapReadGPSLL(uint8_t index);
+void updateMocapState(void);
 bool isMocapAltReady(void);
 void setMocapAltReadyFlag(void);
 void clearMocapAltReadyFlag(void);
